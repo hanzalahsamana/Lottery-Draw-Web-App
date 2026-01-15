@@ -1,0 +1,151 @@
+syntax = "proto2";
+
+package net.mpos.portal.entry;
+
+option java_package = "net.mpos.mc.entry";
+option java_outer_classname = "DrawResult";
+
+message ReqDrawResult{
+	optional string draw_no = 1;
+	optional string start_time=2;
+	optional string end_time=3;
+	optional string game_id=4;
+	required int32 game_type_id=5;
+	optional int32 ra_query_type=6;
+	optional string l590_type=7;
+	optional int32 last_draw_only = 8;
+	optional int32 result_count_from_draw_no = 9;
+}
+
+message ResDrawResult{
+	optional string response_desc = 1;
+	repeated DrawResultInfo drawResultInfo = 2;
+	optional  int32 game_type_id=3;
+	repeated DigitDrawResultInfo digitDrawResultInfo = 4;
+	repeated LuckyDrawResultInfo luckyDrawResultInfo = 5;
+	repeated RaffleResultInfo raffleResultInfo = 6;
+    repeated BingoDrawResultInfo bingoDrawResultInfo =7;
+
+	message DrawResultInfo{
+		required string game_name=1;
+		required string game_type_name=2;
+		required string draw_no=3;
+		required string drawDate=4;
+		required string resultNo=5;
+		required string game_id=6;
+        required string trurnoverAmount=7;
+        required string jackpot=8;
+        optional string speciaNo=9;
+        repeated PrizeLevelDetal prizeLevelDetal=10;
+        optional string first_resultNo = 11;
+        optional string machine_resultNo = 12; 
+        optional string first_machine_resultNo = 13; 
+        required int32 game_type_id=14;
+        repeated NumberMapper mapping = 15;
+        optional string drawVideoUrl = 16;
+        repeated string presentResultString = 17;
+        optional string gameStyle = 18;
+        
+	}
+     message PrizeLevelDetal{
+	    required int32 prizeLevel=1;
+	    required string prizeAmount=2;
+		optional int32 prizeEntryCount=3;
+		optional string prizelevel_des=4;
+		optional string prizeTicketSNs=5;
+	}
+	
+	message DigitDrawResultInfo{
+		required string game_name=1;
+		required string game_type_name=2;
+		required string draw_no=3;
+		required string resultNos=4;
+		required string drawDate=5;
+		required string game_id=6;
+        required string trurnoverAmount=7;
+        required string jackpot=8;
+		repeated DigitPrizeLevelDetal digitPrizeLevelDetal=9;
+		required int32 game_type_id=10;
+		required string algorithm_id=11;
+		repeated NumberMapper mapping = 12;
+		optional string drawVideoUrl = 13;
+        repeated string presentResultString = 14;
+        optional string gameStyle = 15;
+		
+		message DigitPrizeLevelDetal{
+			required string resultNo=1;
+			repeated PrizeLevelDetal baseDetail=2;
+			optional PrizeLevelDetal evenDetail=3;
+			optional PrizeLevelDetal oddDetail=4;
+			repeated PrizeLevelDetal sumDetail=5;
+		}		
+	}
+	
+	message LuckyDrawResultInfo{
+		required string game_name=1;
+		required string game_type_name=2;
+		required string draw_no=3;
+		required string drawDate=4;
+		required string game_id=5;
+        required string trurnoverAmount=6;
+        required string jackpot=7;
+        required int32 draw_type=8;
+		repeated PrizeLevelDetal prizeLevelDetal=9;
+		required int32 game_type_id=10;
+		repeated NumberMapper mapping = 11;
+		optional string drawVideoUrl = 12;
+        repeated string presentResultString = 13;
+        optional string gameStyle = 14;
+	}
+	
+	
+	message RaffleResultInfo{
+		required string game_name=1;
+		required string game_type_name=2;
+		required string draw_no=3;
+		required string drawDate=4;
+		required string game_id=5;
+        required string trurnoverAmount=6;
+        required string jackpot=7;
+		repeated PrizeLevelDetal prizeLevelDetal=8;
+		required int32 game_type_id=9;
+		optional string drawVideoUrl = 10;
+        repeated string presentResultString = 11;
+        optional string gameStyle = 12;
+		
+	}
+ 	message BingoDrawResultInfo{
+                required string game_name=1;
+                required string game_type_name=2;
+                required string draw_no=3;
+                required string drawDate=4;
+                required string resultNo=5;
+                required string game_id=6;
+                required string trurnoverAmount=7;
+                required string jackpot=8;
+                optional string speciaNo=9;
+                repeated PrizeLevelDetal prizeLevelDetail=10;
+                repeated PrizeObjectDetail prizeObjectDetail=11;
+                required int32 game_type_id=12;
+                optional string drawVideoUrl = 13;
+	            repeated string presentResultString = 14;
+	            optional string gameStyle = 15;
+                
+        } 
+     message PrizeObjectDetail{
+			     required int32 prizeLevel=1;
+			     optional string object_code=2;
+			     optional string object_name=3;
+			     optional string descirptions=4;
+			     optional string prizeAmount=5;
+			     optional string luck_no=6;
+			     required string type=7;
+			     optional string count=8;
+     } 
+     message NumberMapper{
+		required int32 part = 1; 
+		required int32 indexToMap = 2;
+		required string mapToString = 3 ;   
+	}
+}
+

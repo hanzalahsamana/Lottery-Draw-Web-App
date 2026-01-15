@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+.HeroSection {
+    background-image: url("./assets/mesh-gradient.svg");
+    background-repeat: no-repeat;
+    background-size: cover;
+    /* contain / auto */
+    background-position: center;
+}
+
+.backdd {
+    background:
+    radial-gradient(circle at center, #1f3a1f 0%, #0b1a0b6f 60%),
+    repeating-conic-gradient(from 0deg,
+    rgba(255, 236, 158, 0.564) 0deg 20deg,
+    rgba(0, 0, 0, 0) 20deg 24deg);
+}

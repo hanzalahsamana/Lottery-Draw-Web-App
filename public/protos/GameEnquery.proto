@@ -1,0 +1,160 @@
+syntax = "proto2";
+
+package net.mpos.portal.entry;
+
+option java_package = "net.mpos.mc.entry";
+option java_outer_classname = "GameEnquery";
+message ReqGameEnquery{
+	required int32 game_type_id=1;
+	optional string game_id=2;
+	optional string draw_no=3;
+	optional string draw_start_time=4;
+	optional string draw_end_time=5;
+	optional int32 draw_status=6;
+	optional string type=7;
+}
+
+message ResGameEnquery{
+	repeated Game game=1;
+	repeated LuckyGame luckyGame=2;
+	message Game{
+		required string game_type_id=1;
+		required string game_id=2;
+		required string game_name=3;
+        optional int32 is_banker=4;
+		optional string base_amount=5;
+		optional int32 min_mulitple_draw=6;
+		optional int32 max_mulitple_draw=7;
+		optional int32 multiple=8;
+		optional int32 max_ticket_entry=9;
+		optional int32 KKK=10;
+		optional int32 NNN=11;
+		optional int32 YYY=12;
+		optional int32 XXX=13;
+        required string jackpot=14;
+		required string snow_ball_pool=15;
+		repeated TotoParameters totoParameters=16;
+		optional DigitGameParameters digitGameParameters=17;
+		repeated GameInstance gameInstance=18;
+		optional int32 entry_count=19;
+		optional int32 mutiple_count=20;
+		optional string max_base_amount=21;
+		optional string bet_amount_stepping = 22; 
+		optional int32 play_format = 23;
+		repeated NumberMapper mapping = 24;
+		optional int32 power_play_mode = 25;
+		optional string power_play_amount = 26;
+		optional int32 double_play_mode = 27;
+		optional string double_play_amount = 28;
+		optional int32 is_keno = 29;
+		optional int32 isSupportRoll = 30;
+		optional int32 isAllowMachine = 31;
+		optional string gameStyle = 32;
+	}
+	message TotoParameters{
+		required int32 triple=1;
+		required int32 minDouble=2;
+		required int32 maxDouble=3;
+	}
+	message DigitGameParameters{
+		required int32 isOddEven=1;
+		required string maxBaseAmount=2;
+		required int32 isSupportSum=3;
+		optional string bet_amount_stepping=4;
+		required int32 isSupportStraight=5;
+		required int32 isSupportBigSmall=6;
+		required int32 isSupportBox=7;
+		required int32 isSupportWheel=8;
+		required int32 isSupportRoll=9;
+		required int32 isSupportFrontPair=10;
+		required int32 isSupportEndPair=11;
+		required int32 isSupportSplitPair=12;
+		required int32 isSupportMiddlePair=13;
+		required int32 isSupportFront=14;
+		required int32 isSupportEnd=15;
+		required int32 isCarnivalBigSmall=16;
+		required int32 allowRepeatDigit=17;
+	}
+	message NumberMapper{
+		required int32 part = 1; 
+		required int32 indexToMap = 2;
+		required string mapToString = 3 ;   
+	}
+	message GameInstance{
+		required string game_instance_id=1;
+		required string game_instance_name=2;
+		required string draw_no=3;
+		required string start_selling_time=4;
+		required string end_selling_time=5;
+		required string draw_date=6;
+		required int32 status=7;
+		required string jackpot=8;
+        required int32 version=9;
+        repeated TotoPlay totoPlay=10;
+        repeated PrizeLevelDetal prizeLevelDetal=11;
+        repeated DigitPrizeLevelDetal digitPrizeLevelDetal=12;
+        optional DrawResultInfo drawResultInfo=13;
+        optional int32 estimate=14;
+        required string snow_ball_pool=15;
+        optional string top_prize=16;
+        repeated BingoObjectDetal bingoObjectDetal=17;
+        optional BingoDrawResultInfo bingoDrawResultInfo=18;
+	}
+   	message PrizeLevelDetal{
+        required int32 prizeLevel=1;
+        required string prizeAmount=2;
+		optional int32 prizeEntryCount=3;
+		optional string prizelevel_des=4;
+	}
+	message DigitPrizeLevelDetal{
+		required string resultNo=1;
+		repeated PrizeLevelDetal baseDetail=2;
+		optional PrizeLevelDetal evenDetail=3;
+		optional PrizeLevelDetal oddDetail=4;
+		repeated PrizeLevelDetal sumDetail=5;
+	}
+	message DrawResultInfo{
+		required string resultNo=1;
+	    optional string speciaNo=2;
+	    optional string trurnoverAmount=3;
+	    optional string firstResultNo=4;
+	    optional string machineNo=5;
+	    optional string firstMachineNo=6;
+	}
+	message TotoPlay{
+		required int32 matchSeq=1;
+		required int32 betOptionType=2;
+		required string matchType=3;
+		required string nature=4;
+		required string homeTeam=5;
+		required string awayTeam=6;
+		required string result=7;
+	}
+	message LuckyGame{
+		required string game_name=1;
+		required string draw_no=2;
+		required string draw_date=3;
+		required string draw_type=4;
+	}
+	 message BingoDrawResultInfo{
+      required string resultNo=1;
+      optional string turnoverAmount=2;
+      repeated ObjectResultInfo objectResultInfo=3;
+    }
+     message ObjectResultInfo{
+           required string prize_level=1;
+           required string luckyNo=2;
+    }
+	message BingoObjectDetal
+    {
+      required int32 prize_level=1;
+      optional string object_name=2;
+      optional string prizeAmount=3;
+      optional string tax_amount=4;
+      optional string object_type=5;
+      optional string prize_desc=6; 
+      optional string  prizeEntryCount=7;
+      optional int32 object_num=8;
+    }
+	
+}
