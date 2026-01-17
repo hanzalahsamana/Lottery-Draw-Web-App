@@ -8,10 +8,68 @@
     background-position: center;
 }
 
-.backdd {
-    background:
-    radial-gradient(circle at center, #1f3a1f 0%, #0b1a0b6f 60%),
-    repeating-conic-gradient(from 0deg,
-    rgba(255, 236, 158, 0.564) 0deg 20deg,
-    rgba(0, 0, 0, 0) 20deg 24deg);
+
+.countdown {
+    letter-spacing: 1px;
+    /* gradient text */
+    background: linear-gradient(0deg, #ffe9a8, #ffe9a8 60%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+}
+
+.billiard-ball {
+    --_color-yellow: hsl(57, 100%, 50%);
+    --_color-blue: hsl(216, 100%, 58%);
+    --_color-red: hsl(0 100% 50%);
+    --_color-pink: hsl(325 100% 50%);
+    --_color-purple: hsl(259, 86%, 65%);
+    --_color-orange: hsl(17 100% 47%);
+    --_color-green: hsl(125 100% 25%);
+    --_color-brown: hsl(10 100% 25%);
+    --_color-black: hsl(0 0% 5%);
+    --_color-white: hsl(0 0% 95%);
+    --_grad-light: radial-gradient(100% 100% at 70% 15%, hsl(0 0% 100%/.5), hsl(0 0% 100%/.2) 10%, hsl(0 0% 0%/.1) 60%, hsl(0 0% 0%/.4));
+
+    aspect-ratio: 1/1;
+    /* box-shadow: -1rem 1rem 1rem hsl(0 0% 0% / .5); */
+    background-color: var(--_color-orange);
+    background-image: var(--_grad-light);
+}
+
+
+.billiard-ball[data-snooker="red"] {
+    background-color: var(--_color-red);
+}
+
+.billiard-ball[data-snooker="yellow"] {
+    background-color: var(--_color-yellow);
+}
+
+.billiard-ball[data-snooker="green"] {
+    background-color: var(--_color-green);
+}
+
+.billiard-ball[data-snooker="brown"] {
+    background-color: var(--_color-brown);
+}
+
+.billiard-ball[data-snooker="blue"] {
+    background-color: var(--_color-blue);
+}
+
+.billiard-ball[data-snooker="pink"] {
+    background-color: var(--_color-pink);
+}
+
+.billiard-ball[data-snooker="black"] {
+    background-color: var(--_color-black);
+}
+
+.billiard-ball[data-snooker="purple"] {
+    background-color: var(--_color-purple);
+}
+.billiard-ball[data-snooker="white"] {
+    background-color: var(--_color-white);
 }

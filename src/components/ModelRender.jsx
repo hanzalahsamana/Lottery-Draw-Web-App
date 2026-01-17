@@ -1,90 +1,83 @@
-// ModelRender_Fixed_and_Realistic.jsx
-// Full replacement for your ModelRender.jsx with automatic centering, fit-to-view, fixed (non-draggable),
-// improved PBR lighting/environment, contact shadows and a simple ball-spinner you can tweak.
-
+// ModelRenderViewerLike.jsx
 import React, { Suspense, useEffect, useRef } from "react";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import { useGLTF, useAnimations, Environment, ContactShadows, } from "@react-three/drei";
+import {
+  useGLTF,
+  useAnimations,
+  Environment,
+  ContactShadows,
+} from "@react-three/drei";
 import * as THREE from "three";
 
-
-function FitAndPrepareModel({ gltfScene }) {
-  // helper used inside Model component to center/scale the loaded scene and return useful bounds
+function FitAndPrepareModel({ gltfScene, desiredSize = 40 }) {
   const scene = gltfScene;
   const { camera } = useThree();
 
   useEffect(() => {
     if (!scene) return;
 
-    // compute bounding box in model space
+    // bounding box in model space
     const bbox = new THREE.Box3().setFromObject(scene);
     const size = bbox.getSize(new THREE.Vector3());
     const center = bbox.getCenter(new THREE.Vector3());
 
-    // target scale so the biggest axis fits nicely in view
-    const DESIRED_SIZE = 2.2; // tweak this to make the model larger/smaller in view
-    const maxDim = Math.max(size.x, size.y, size.z);
-    const scale = maxDim > 0 ? DESIRED_SIZE / maxDim : 1;
+    // keep your desiredSize logic (you used a constant desiredSize before)
+    const scale = desiredSize;
     scene.scale.setScalar(scale);
 
-    // re-center the model at origin (so camera framing is predictable)
+    // center the model at origin (after scaling)
     scene.position.x = -center.x * scale;
     scene.position.y = -center.y * scale;
     scene.position.z = -center.z * scale;
 
-    // lift it a bit so it sits slightly above the ground plane (makes shadows look nicer)
+    // small lift so machine sits nicely on ground plane (optional)
     scene.position.y += (size.y * scale) / 2;
 
-    // ensure all meshes cast/receive shadows and their textures use sRGB where appropriate
+    // ensure meshes cast/receive shadows and use sRGB for textures
     scene.traverse((child) => {
       if (child.isMesh) {
         child.castShadow = true;
         child.receiveShadow = true;
-
         const mat = child.material;
         if (mat) {
           if (mat.map) mat.map.encoding = THREE.sRGBEncoding;
           if (mat.emissiveMap) mat.emissiveMap.encoding = THREE.sRGBEncoding;
-          // gently tweak material to be more "realistic" if it's too flat
-          if (typeof mat.metalness === "number") mat.metalness = Math.min(1, mat.metalness + 0.05);
-          if (typeof mat.roughness === "number") mat.roughness = Math.max(0.12, mat.roughness - 0.05);
+          if (typeof mat.metalness === "number") mat.metalness = Math.min(1, mat.metalness + 0.02);
+          if (typeof mat.roughness === "number") mat.roughness = Math.max(0.08, mat.roughness - 0.03);
           if (mat.envMapIntensity === undefined) mat.envMapIntensity = 1.0;
           mat.needsUpdate = true;
         }
       }
     });
 
-    // position camera a bit further back depending on model height so it fits vertically as well
-    const camY = size.y * scale * 0.8;
+    // position camera to front face and look at the model center
+    const camY = size.y * scale * 0.6;
     const camZ = Math.max(size.x, size.z) * scale * 2.2 + 0.5;
-    camera.position.set(0, camY, camZ);
-    camera.lookAt(0, size.y * scale * 0.5, 0);
+    camera.position.set(-camZ, camY - 0.8, 0);
+    camera.lookAt(0, size.y * scale * 0.60, 0);
     camera.updateProjectionMatrix();
-  }, [scene, camera]);
+
+  }, [scene, camera, desiredSize]);
 
   return null;
 }
 
+/**
+ * Model component - loads GLB and optionally plays animations
+ */
 function Model({ url, playSequence = [] }) {
   const ref = useRef();
   const { scene, animations } = useGLTF(url);
   const { actions } = useAnimations(animations, ref);
 
-  // attach scene to a Group so we can reference it for sizing and transformations
   useEffect(() => {
     if (!scene) return;
-
-    // log animations for debugging
-    console.log("GLTF animations available:", Object.keys(actions));
-
-    // if there is at least one action and no sequence requested, play the first
-    const names = Object.keys(actions);
+    const names = Object.keys(actions || {});
     if (names.length && playSequence.length === 0) {
-      actions[names[0]].reset().play();
+      actions[names[0]]?.reset()?.play();
     }
   }, [scene, actions, playSequence]);
 
-  // helper to play a clip once
   const playOnce = (name) => {
     const a = actions[name];
     if (!a) {
@@ -96,7 +89,7 @@ function Model({ url, playSequence = [] }) {
       a.setLoop(THREE.LoopOnce, 1);
       a.clampWhenFinished = true;
       a.play();
-      const duration = a.getClip().duration * 1000 / (a.timeScale || 1);
+      const duration = (a.getClip().duration * 1000) / (a.timeScale || 1);
       setTimeout(resolve, duration + 50);
     });
   };
@@ -104,20 +97,17 @@ function Model({ url, playSequence = [] }) {
   useEffect(() => {
     if (!playSequence || playSequence.length === 0) return;
     let cancelled = false;
-
     (async () => {
       for (const name of playSequence) {
         if (cancelled) break;
         await playOnce(name);
       }
     })();
-
     return () => {
       cancelled = true;
     };
   }, [playSequence, actions]);
 
-  // Ensure the primitive is a Group so useGLTF scene can be inspected/modified
   return (
     <group ref={ref} dispose={null}>
       <primitive object={scene} />
@@ -126,119 +116,177 @@ function Model({ url, playSequence = [] }) {
   );
 }
 
-// Simple ball spinner -- loads the ball GLB and clones it 'count' times around a circle
-function BallSpinner({ ballUrl, count = 8, radius = 0.4, height = 0.5, speed = 1.2 }) {
-  const { scene } = useGLTF(ballUrl);
+/**
+ * SpinningBalls
+ * - loads single ball GLB
+ * - fixes material problems (transparency / encoding)
+ * - clones it `count` times, positions in a circular volume and animates
+ */
+function SpinningBalls({
+  count = 90,
+  drumCenter = [0, 1.35, 0],
+  drumRadius = 0.75,
+  ballScale = 0.028,
+}) {
   const group = useRef();
+  const { scene: ballScene } = useGLTF(
+    "/Compelet_Machine_Model_Textures/Ball_Model_Textures/Ball_Mdl_001.glb"
+  );
 
-  // create clones only once
-  const clones = useRef([]);
+  // fix materials (important to avoid white-square / alpha artefacts)
   useEffect(() => {
-    if (!scene) return;
-    // clear previous
-    clones.current = [];
-
-    for (let i = 0; i < count; i++) {
-      const clone = scene.clone(true);
-      // set a brake on scale if original ball is too big
-      clone.scale.setScalar(0.6);
-      // ensure shadows
-      clone.traverse((c) => {
-        if (c.isMesh) {
-          c.castShadow = true;
-          c.receiveShadow = true;
-          if (c.material && c.material.map) c.material.map.encoding = THREE.sRGBEncoding;
+    if (!ballScene) return;
+    ballScene.traverse((c) => {
+      if (c.isMesh) {
+        c.castShadow = true;
+        c.receiveShadow = true;
+        const mat = c.material;
+        if (mat) {
+          // allow alpha, but avoid fully transparent failing; adjust to your asset
+          mat.transparent = true;
+          // alphaTest helps discard fully transparent pixels if model uses cutout
+          mat.alphaTest = mat.alphaTest || 0.4;
+          // ensure color textures are rendered correctly
+          if (mat.map) mat.map.encoding = THREE.sRGBEncoding;
+          mat.depthWrite = true;
+          mat.side = THREE.FrontSide;
+          mat.needsUpdate = true;
         }
-      });
-      clones.current.push(clone);
-      group.current && group.current.add(clone);
-    }
-    // cleanup
-    return () => {
-      if (group.current) group.current.clear();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scene]);
+      }
+    });
+  }, [ballScene]);
 
+  // prepare randomized positions + speeds & clones (create once)
+  const balls = React.useMemo(() => {
+    if (!ballScene) return [];
+    return Array.from({ length: count }).map(() => {
+      // random spherical-ish distribution inside drum volume
+      const theta = Math.random() * Math.PI * 2; // azimuth
+      const u = Math.random() * 2 - 1; // cos-like distribution
+      const phi = Math.acos(u);
+      const r = drumRadius * (0.25 + Math.random() * 0.75); // avoid center collapse
+
+      const x = drumCenter[0] + r * Math.sin(phi) * Math.cos(theta);
+      const y = drumCenter[1] + (Math.random() - 0.2) * (drumRadius * 0.6); // more toward bottom
+      const z = drumCenter[2] + r * Math.sin(phi) * Math.sin(theta);
+
+      // slight individualization for motion
+      const rotSpeed = 0.6 + Math.random() * 1.4;
+      const orbitOffset = Math.random() * Math.PI * 2;
+      const orbitSpeed = 0.3 + Math.random() * 0.7;
+
+      // clone the GLTF scene (deep clone so each instance is independent)
+      const clone = ballScene.clone(true);
+
+      return {
+        clone,
+        position: [x, y, z],
+        rotSpeed,
+        orbitOffset,
+        orbitSpeed,
+      };
+    });
+  }, [ballScene, count, drumCenter, drumRadius]);
+
+  // animate: group rotation + small local per-ball rotations / orbit offsets
   useFrame((state, delta) => {
     if (!group.current) return;
-    // rotate the whole group
-    group.current.rotation.y += delta * speed * 0.2;
 
-    // place each clone around the circle (we do this every frame so you can animate radial movement later)
-    clones.current.forEach((clone, i) => {
-      const a = (i / clones.current.length) * Math.PI * 2 + state.clock.elapsedTime * speed * 0.4;
-      const x = Math.cos(a) * radius;
-      const z = Math.sin(a) * radius;
-      if (clone) clone.position.set(x, height + Math.sin(state.clock.elapsedTime * 2 + i) * 0.02, z);
-      if (clone) clone.rotation.y = a + Math.PI * 0.5;
+    // rotate the whole ball group to simulate drum motion
+    group.current.rotation.y += delta * 0.6; // main yaw
+    group.current.rotation.x += delta * 0.18; // slight pitch
+
+    // animate each ball: subtle self rotation + small orbit wobble
+    group.current.children.forEach((child, i) => {
+      const b = balls[i];
+      if (!b) return;
+      // basic self-rotation
+      child.rotation.x += delta * b.rotSpeed;
+      child.rotation.y += delta * (b.rotSpeed * 0.8);
+
+      // small orbital wobble around initial position for liveliness
+      const t = state.clock.elapsedTime * b.orbitSpeed + b.orbitOffset;
+      const wobble = 0.006 * (1 + Math.sin(t * 1.5));
+      child.position.x = b.position[0] + Math.cos(t) * wobble;
+      child.position.y = b.position[1] + Math.sin(t * 1.1) * wobble * 0.6;
+      child.position.z = b.position[2] + Math.sin(t * 0.9) * wobble;
     });
   });
 
-  return <group ref={group} />;
+  // render clones as primitives only when balls are ready
+  return (
+    <group ref={group}>
+      {balls.map((b, i) => (
+        <primitive
+          key={i}
+          object={b.clone}
+          position={b.position}
+          scale={[ballScale, ballScale, ballScale]}
+        />
+      ))}
+    </group>
+  );
 }
 
-export default function ModelRenderFixed({ playSequence = [] }) {
-  // paths (adjust if your assets live elsewhere)
-  const MACHINE_URL = "/Compelet_Machine_Model_Textures/Machine_Model_Textures/Lottery Simulator6.glb";
-  const BALL_URL = "/Compelet_Machine_Model_Textures/Ball_Model_Textures/Ball_Mdl_001.glb";
+export default function ModelRenderViewerLike({ playSequence = [], modelUrl }) {
+  const MACHINE_URL =
+    modelUrl ||
+    "/Compelet_Machine_Model_Textures/Machine_Model_Textures/Lottery Simulator6.glb";
 
   return (
-    <div className="w-[500px] h-[500px] flex items-center justify-center " >
+    <div
+      style={{
+        width: "400px",
+        height: "600px",
+        display: "flex",
+        alignItems: "end",
+        justifyContent: "end",
+      }}
+    >
       <Canvas
         shadows
         dpr={[1, 2]}
-        camera={{ position: [0, 1.2, 3], fov: 40 }}
+        camera={{ fov: 50 }}
         onCreated={({ gl }) => {
           gl.outputEncoding = THREE.sRGBEncoding;
-          gl.physicallyCorrectLights = true;
           gl.toneMapping = THREE.ACESFilmicToneMapping;
+          gl.toneMappingExposure = 1.2;
+          gl.physicallyCorrectLights = true;
         }}
         style={{ width: "100%", height: "100%" }}
       >
-        {/* ambient + fill lights */}
-        <ambientLight intensity={0.35} />
-        <hemisphereLight intensity={0.4} />
-
-        {/* key lights to create the studio look */}
-        <directionalLight
-          castShadow
-          intensity={1}
-          position={[5, 10, 5]}
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
-          shadow-camera-left={-5}
-          shadow-camera-right={5}
-          shadow-camera-top={5}
-          shadow-camera-bottom={-5}
-        />
-
-        <pointLight intensity={0.6} position={[-6, 4, -4]} />
-        <pointLight intensity={0.4} position={[6, 4, -2]} />
-
         <Suspense fallback={null}>
-          {/* realistic env for reflections; set background={false} to keep our CSS background */}
-          {/* <Environment preset="studio" background={false} /> */}
+          <Environment preset="studio" background={false} intensity={1.0} />
 
-          {/* main machine model */}
+          <directionalLight
+            position={[5, 8, 5]}
+            intensity={1.2}
+            castShadow
+            shadow-mapSize-width={2048}
+            shadow-mapSize-height={2048}
+          />
+          <ambientLight intensity={0.12} />
+
           <Model url={MACHINE_URL} playSequence={playSequence} />
 
-          {/* place spinner near the top area of the machine; you may need to tweak translate values
-              to put it exactly where the glass dome sits in your machine. */}
-          <group position={[0, 0.9, 0] /* tweak X,Y,Z to position inside the machine */}>
-            <BallSpinner ballUrl={BALL_URL} count={10} radius={0.45} height={0.04} speed={2.2} />
-          </group>
-
-          {/* soft contact shadow under the machine */}
-          <ContactShadows position={[0, -0.05, 0]} opacity={0.7} width={4} blur={2.5} far={1.5} />
+          <ContactShadows
+            position={[0, -0.05, 0]}
+            opacity={0.6}
+            width={4}
+            blur={2.5}
+            far={1.5}
+          />
         </Suspense>
 
-        {/* NO OrbitControls: model is fixed and user cannot drag/rotate/zoom by default */}
       </Canvas>
     </div>
   );
 }
 
-// small helper to avoid bundling warnings when using useGLTF in development
-useGLTF.preload("/Compelet_Machine_Model_Textures/Machine_Model_Textures/Lottery Simulator6.glb");
-// useGLTF.preload("/Compelet_Machine_Model_Textures/Ball_Model_Textures/Ball_Mdl_001.glb");
+// preload both models for better UX
+useGLTF.preload(
+  "/Compelet_Machine_Model_Textures/Machine_Model_Textures/Lottery Simulator6.glb"
+);
+useGLTF.preload(
+  "/Compelet_Machine_Model_Textures/Ball_Model_Textures/Ball_Mdl_001.glb"
+);
