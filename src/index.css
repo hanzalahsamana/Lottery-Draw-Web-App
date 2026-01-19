@@ -3,6 +3,7 @@
 .HeroSection {
     background-image: url("./assets/mesh-gradient.svg");
     background-repeat: no-repeat;
+    /* background-color: black; */
     background-size: cover;
     /* contain / auto */
     background-position: center;
