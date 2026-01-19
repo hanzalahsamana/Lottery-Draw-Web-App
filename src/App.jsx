@@ -1,3 +1,4 @@
+import { Loader } from '@react-three/drei';
 import './App.css'
 import ModelRender from './components/ModelRender';
 import SecondComp from './components/SecondComp.jsx';
@@ -8,19 +9,28 @@ function App() {
 
   return (
     <div className='HeroSection max-w-screen overflow-x-hidden'>
-      <ModelRender />
-      {/* <div className="fixed w-200 h-50 top-1/2 -translate-y-1/2 -right-25 blur-[180px] rounded-full bg-[#e47f0b79]"></div>
+      <Loader
+
+        containerStyles={{ background: '#000' }}   // full-screen overlay styles
+        innerStyles={{ backgroundColor: '#fff' }}  // progress bar container
+        barStyles={{ backgroundColor: '#22c55e' }} // progress bar color
+        textStyles={{ color: '#fff', fontSize: 22 }} // loading text
+        dataStyles={{ color: '#aaa' }}              // filename text
+        speed={1}                                    // animation speed
+      />
+      <div className="fixed w-200 h-50 top-1/2 -translate-y-1/2 -right-25 blur-[180px] rounded-full bg-[#e47f0b79]"></div>
       <div className="fixed w-250 h-75 -top-10 -left-7.5 blur-[190px] rounded-full bg-[#751de19f]"></div>
 
 
-      <div className=' md:max-h-[400px]  overflow-hidden flex items-center md:flex-row flex-col justify-between px-10'>
+      <div className=' md:max-h-[400px]  overflow-hidden flex items-center md:flex-row flex-col justify-between px-8'>
         <div className='z-20'>
           <h1 className='font-bold text-[#FEB906] text-[35px] md:text-[65px]/[85px]'>Millions in prizes,</h1>
           <h1 className='font-bold text-[#ffffff]  text-[35px] md:text-[65px]/[85px]'>Just one ticket away.</h1>
         </div>
+        <ModelRender />
       </div>
 
-      <SecondComp /> */}
+      <SecondComp />
 
 
 

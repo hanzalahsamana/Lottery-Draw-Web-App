@@ -443,7 +443,7 @@ function SpinningBalls({
       }
 
       // small damping
-      b.vel.multiplyScalar(0.997);
+      b.vel.multiplyScalar(0.1);
 
       // update angular rotation
       b.ang.x += b.angVel.x * dt;
@@ -474,8 +474,8 @@ export default function ModelRenderViewerLike({ playSequence = [], modelUrl }) {
   return (
     <div
       style={{
-        width: "500px",
-        height: "700px",
+        width: "400px",
+        height: "600px",
         display: "flex",
         alignItems: "start",
         justifyContent: "start",

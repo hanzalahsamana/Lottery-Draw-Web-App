@@ -1,6 +1,7 @@
 import BilliardBall from './BilliardBall'
 import { AiOutlineDollarCircle } from 'react-icons/ai';
 import AnimationWrapper from './AnimationWrapper';
+import { useEffect, useState } from 'react';
 
 const dummyData = [
     {
@@ -47,6 +48,27 @@ const dummyData = [
 
 
 const SecondComp = () => {
+
+    const [secondsLeft, setSecondsLeft] = useState(24 * 3600 + 23 * 60 + 30 + 56);
+
+    useEffect(() => {
+        const t = setInterval(() => {
+            setSecondsLeft((s) => Math.max(0, s - 1));
+        }, 1000);
+        return () => clearInterval(t);
+    }, []);
+
+    function formatDaysHoursMinutesSeconds(sec) {
+        const days = Math.floor(sec / 86400);
+        sec %= 86400;
+        const hours = Math.floor(sec / 3600);
+        sec %= 3600;
+        const minutes = Math.floor(sec / 60);
+        const seconds = sec % 60;
+        const pad = (n) => String(n).padStart(2, "0");
+        return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    }
+
     return (
         <AnimationWrapper className='bg-transparent w-full py-13.5 px-7.5 overflow-hidden'>
             <div className=' bg-linear-to-b from-[#0b1220] to-[#071124]/60 shadow-2xl px-12.5 py-15 w-full min-h-75 rounded-[15px] relative borde-[1.4px] borde-[#6b728d] z-0 ring-[1.5px] ring-white/15'>
@@ -58,7 +80,7 @@ const SecondComp = () => {
                             Next Draw In
                         </p>
                         <div className="countdown text-[40px]/[38px] font-extrabold tracking-[1px]">
-                            00:15:56
+                            {formatDaysHoursMinutesSeconds(secondsLeft)}
                         </div>
                     </div>
 
