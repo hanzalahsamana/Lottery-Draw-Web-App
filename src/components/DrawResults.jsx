@@ -47,7 +47,7 @@ const dummyData = [
 ];
 
 
-const SecondComp = () => {
+const DrawResults = () => {
 
     const [secondsLeft, setSecondsLeft] = useState(24 * 3600 + 23 * 60 + 30 + 56);
 
@@ -125,4 +125,4 @@ const SecondComp = () => {
     )
 }
 
-export default SecondComp
+export default DrawResults
