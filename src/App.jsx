@@ -58,21 +58,21 @@ function App() {
                 <img src={ball} alt="" className='w-[50px] h-[50px] rounded-md' />
                 <div className='flex flex-col gap-1'>
                   <p className='text-white font-medium text-sm'>Bingo</p>
-                  <p className='text-white/80 text-xs'>Bingo is the game</p>
+                  <p className='text-white/80 text-xs'>Card game</p>
                 </div>
               </div>
               <div className='bg-[#0b1220] p-1.5 rounded-lg cursor-pointer flex gap-2 items-start'>
                 <img src={win} alt="" className='w-[50px] h-[50px] rounded-md' />
                 <div className='flex flex-col gap-1'>
                   <p className='text-white font-medium text-sm'>Winner</p>
-                  <p className='text-white/80 text-xs'>Bingo is the game</p>
+                  <p className='text-white/80 text-xs'>Who will be?</p>
                 </div>
               </div>
               <div className='bg-[#0b1220] p-1.5 rounded-lg cursor-pointer flex gap-2 items-start'>
                 <img src={lotery} alt="" className='w-[50px] h-[50px] rounded-md' />
                 <div className='flex flex-col gap-1'>
-                  <p className='text-white font-medium text-sm'>Bingo</p>
-                  <p className='text-white/80 text-xs'>Bingo is the game</p>
+                  <p className='text-white font-medium text-sm'>Lottery</p>
+                  <p className='text-white/80 text-xs'>Luck depends</p>
                 </div>
               </div>
             </div>
@@ -85,10 +85,6 @@ function App() {
       <DrawResults secondsLeft={secondsLeft} />
 
       <BackgroundAudio />
-      <LotteryAnnouncer numbers={[2, 3, 4, 5, 6, 7]} />
-
-
-
     </div>
   )
 }
