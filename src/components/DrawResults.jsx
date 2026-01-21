@@ -47,17 +47,7 @@ const dummyData = [
 ];
 
 
-const DrawResults = () => {
-
-    const [secondsLeft, setSecondsLeft] = useState(24 * 3600 + 23 * 60 + 30 + 56);
-
-    useEffect(() => {
-        const t = setInterval(() => {
-            setSecondsLeft((s) => Math.max(0, s - 1));
-        }, 1000);
-        return () => clearInterval(t);
-    }, []);
-
+const DrawResults = ({ secondsLeft }) => {
     function formatDaysHoursMinutesSeconds(sec) {
         const days = Math.floor(sec / 86400);
         sec %= 86400;

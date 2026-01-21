@@ -4,7 +4,7 @@ import { useGLTF, } from "@react-three/drei";
 import * as THREE from "three";
 
 
-export const SpinningBalls = ({ scene, count = 25, ballScale = 1, ballUrl = '' }) => {
+export const SpinningBalls = ({ scene, count = 25, ballScale = 1, ballUrl = '', ballTexture }) => {
 
     const instRef = useRef(null); // InstancedMesh ref
     const ballsStateRef = useRef([]); // { pos: Vector3 (local to anchor), vel: Vector3 (local), ang: Euler, angVel: Vector3 }
@@ -24,16 +24,22 @@ export const SpinningBalls = ({ scene, count = 25, ballScale = 1, ballUrl = '' }
         return v;
     }
 
-    function extractSingleBallMesh(ballScene) {
+    function extractSingleBallMesh(ballScene, texture) {
         let mesh = null;
         ballScene.traverse((node) => {
             if (node.isMesh && !mesh) mesh = node;
         });
         if (!mesh) throw new Error("No ball mesh found in ball GLB");
-        // clone geometry & material for instanced usage (material will be reused across instances)
+
+        // clone geometry & material for instanced usage
         const geometry = mesh.geometry.clone();
-        // prefer a single material (if array, pick first; you can adjust if your ball uses multi-material)
         const material = Array.isArray(mesh.material) ? mesh.material[0].clone() : mesh.material.clone();
+
+        // apply the texture if provided
+        if (texture) {
+            material.map = texture;
+            material.needsUpdate = true;
+        }
 
         // material tweaks
         material.side = THREE.FrontSide;
@@ -45,13 +51,16 @@ export const SpinningBalls = ({ scene, count = 25, ballScale = 1, ballUrl = '' }
         }
         material.needsUpdate = true;
 
+        mesh.scale.setScalar(1);
+        geometry.computeBoundingSphere();
+
         return { geometry, material, originalMesh: mesh };
     }
 
     // compute drum info using Glass_Mdl_01 and create an anchor group placed correctly in the same parent
     const drumInfo = useMemo(() => {
         if (!scene) return null;
-        const drumMesh = scene.getObjectByName("Glass_Mdl_01");
+        const drumMesh = scene.getObjectByName("Glass_Mdl_01002");
 
         drumMesh.updateWorldMatrix(true, true);
 
@@ -62,27 +71,31 @@ export const SpinningBalls = ({ scene, count = 25, ballScale = 1, ballUrl = '' }
         const drumSizeWorld = new THREE.Vector3();
         drumBox.getSize(drumSizeWorld);
 
-        const drumRadiusWorld = Math.min(drumSizeWorld.x, drumSizeWorld.y, drumSizeWorld.z) * 0.58;
+        const trueDiameter = drumSizeWorld.z;
+        drumSizeWorld.set(trueDiameter, trueDiameter, trueDiameter);
+
+        console.log("🚀 ~ SpinningBalls ~ drumSizeWorld:", drumSizeWorld);
+
+        const drumRadiusWorld = Math.min(drumSizeWorld.z, drumSizeWorld.z, drumSizeWorld.z) * 0.58; //0.66
 
         const parent = drumMesh.parent || scene;
 
         const centerLocal = drumCenterWorld.clone();
-        const centerOffset = new THREE.Vector3(0.1, 0.21, 0.41); // 👉 move right (X+)
+        const centerOffset = new THREE.Vector3(0.35, 0, 0);
         centerLocal.add(centerOffset);
         parent.worldToLocal(centerLocal);
-
 
 
         const rimWorld = drumCenterWorld.clone().add(new THREE.Vector3(drumRadiusWorld, 0, 0));
         const rimLocal = rimWorld.clone();
         parent.worldToLocal(rimLocal);
-        const radiusLocal = rimLocal.distanceTo(centerLocal);
+        const radiusLocal = rimLocal.distanceTo(centerLocal); // 0.74
 
         // vertical half-size in world -> convert to local to compute y limit
         const topWorld = drumBox.max.clone();
         const topLocal = topWorld.clone();
         parent.worldToLocal(topLocal);
-        const yHalfLocal = Math.abs(topLocal.y - centerLocal.y);
+        const yHalfLocal = Math.abs(topLocal.y - centerLocal.y); //0.93
 
         return {
             drumMesh,
@@ -127,8 +140,8 @@ export const SpinningBalls = ({ scene, count = 25, ballScale = 1, ballUrl = '' }
     // prepare instanced mesh once ball GLB & anchor ready
     useEffect(() => {
         if (!ballScene || !drumInfo || !drumAnchorRef.current) return;
-
-        const { geometry, material } = extractSingleBallMesh(ballScene);
+      
+        const { geometry, material } = extractSingleBallMesh(ballScene, ballTexture);
 
         // create InstancedMesh
         const inst = new THREE.InstancedMesh(geometry, material, count);
@@ -146,7 +159,7 @@ export const SpinningBalls = ({ scene, count = 25, ballScale = 1, ballUrl = '' }
 
         // create initial per-ball states (positions in anchor-local coordinates)
         const states = [];
-        const { parent, drumCenterWorld, centerLocal, radiusLocal, drumRadiusWorld } = drumInfo;
+        const { parent, drumCenterWorld, centerLocal, drumRadiusWorld } = drumInfo;
 
         for (let i = 0; i < count; i++) {
             // random point inside world-sphere then convert to parent-local and then to anchor-local
@@ -176,6 +189,15 @@ export const SpinningBalls = ({ scene, count = 25, ballScale = 1, ballUrl = '' }
                 (Math.random() - 0.5) * 2.0,
                 (Math.random() - 0.5) * 2.0
             );
+
+
+            // const tex = ballTextures[i % ballTextures.length];
+            // const mat = Array.isArray(material) ? material[0].clone() : material.clone();
+            // if (tex) {
+            //     mat.map = tex;
+            //     mat.map.encoding = THREE.sRGBEncoding;
+            //     mat.map.anisotropy = Math.min(16, mat.map.anisotropy || 1);
+            // }
 
             // approximate collision radius in local units (use geometry boundingSphere scaled by visual scale and parent's local transform)
             let baseRadius = 0.5; // fallback
@@ -233,8 +255,7 @@ export const SpinningBalls = ({ scene, count = 25, ballScale = 1, ballUrl = '' }
         if (!inst || !states || states.length === 0 || !drumInfo || !drumAnchorRef.current) return;
 
         const { radiusLocal, parent, centerLocal, yHalfLocal } = drumInfo;
-        const areaFactor = 0.1; // 70% of drum radius
-        const safetyRadius = radiusLocal * areaFactor;// allow small margin
+        const safetyRadius = radiusLocal * 0.1;// allow small margin
         const separationStrength = 100;
         const swirlStrength = 0 * dt; // small tangential addition (scaled by dt)
         const tempObj = new THREE.Object3D();
@@ -288,21 +309,22 @@ export const SpinningBalls = ({ scene, count = 25, ballScale = 1, ballUrl = '' }
             const deltaVel = b.vel.clone().multiplyScalar(dt);
             b.pos.add(deltaVel);
 
-            // boundary collision: spherical surface
             const distFromCenter = b.pos.length();
             const maxDist = safetyRadius - b.radius;
             if (distFromCenter > maxDist) {
-                // compute normal
                 const normal = b.pos.clone().normalize();
-                // clamp position onto sphere surface
                 b.pos.copy(normal.multiplyScalar(maxDist));
-                // reflect velocity about normal: v' = v - 2*(v·n)*n
                 const vDotN = b.vel.dot(normal);
                 b.vel.addScaledVector(normal, -2 * vDotN);
-                // damping
                 b.vel.multiplyScalar(1);
             }
 
+            // const planeX = safetyRadius * 0.65; // 🔴 adjust to match mirror position
+
+            // if (b.pos.x > planeX - b.radius) {
+            //     b.pos.x = planeX - b.radius;
+            //     b.vel.x = -Math.abs(b.vel.x) * 20; // bounce inward
+            // }
             // vertical ceiling/floor clamp using yHalfLocal (so we preserve real drum height)
             const yLimit = Math.max(0.0001, yHalfLocal - b.radius);
             if (b.pos.y > yLimit) {

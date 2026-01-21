@@ -71,21 +71,41 @@
 .billiard-ball[data-snooker="purple"] {
     background-color: var(--_color-purple);
 }
+
 .billiard-ball[data-snooker="white"] {
     background-color: var(--_color-white);
 }
 
 
 ::-webkit-scrollbar {
-  display: none;
+    display: none;
 }
 
 /* Firefox */
 * {
-  scrollbar-width: none;
+    scrollbar-width: none;
 }
 
 /* IE */
 * {
-  -ms-overflow-style: none;
+    -ms-overflow-style: none;
+}
+
+
+.animteUpDown {
+    animation: updown 3s ease-in-out infinite;
+}
+
+@keyframes updown {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
 }
