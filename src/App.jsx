@@ -12,7 +12,7 @@ import win from '/GameLogos/win.jpg';
 function App() {
   // const draws = useGameDraws()
 
-  const initialSeconds = 700;
+  const initialSeconds = 70;
 
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
 
