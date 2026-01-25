@@ -42,3 +42,27 @@ export const announceNumbers = (
     }, speakTime);
   });
 };
+
+export const speak = (text, { voiceName = 'female', volume = 1, rate = 0.7, pitch = 1 } = {}) => {
+  if (!window.speechSynthesis || !text) return;
+
+  const voices = window.speechSynthesis.getVoices();
+  const chosenVoice =
+    voices.find(
+      (voice) =>
+        voice.lang.includes('en') &&
+        (voice.name.toLowerCase().includes(voiceName) ||
+          voice.name.toLowerCase().includes('zira') ||
+          voice.name.toLowerCase().includes('susan') ||
+          voice.name.toLowerCase().includes('google uk english')),
+    ) || voices[0];
+
+  const message = new SpeechSynthesisUtterance(text.toString());
+  message.voice = chosenVoice;
+  message.lang = 'en-US';
+  message.volume = volume;
+  message.rate = rate;
+  message.pitch = pitch;
+
+  window.speechSynthesis.speak(message);
+};

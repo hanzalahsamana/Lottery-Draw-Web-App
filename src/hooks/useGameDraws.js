@@ -10,6 +10,8 @@ export default function useGameDraws(gameId) {
   const [gameMeta, setGameMeta] = useState(null);
   const [lastDraws, setLastDraws] = useState([]);
   const [loading, setLoading] = useState([]);
+  const [lotteryLoading, setLotteryLoading] = useState(false);
+
   const rootRef = useRef(null);
   const stompClientRef = useRef(null);
 
@@ -86,39 +88,46 @@ export default function useGameDraws(gameId) {
     }
   }, []);
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-        if (!gameId) {
-          console.warn('No gameId in URL');
-          return;
-        }
-        setLoading(true);
-
-        const waitForProto = () =>
-          new Promise((res) => {
-            const t = setInterval(() => {
-              if (rootRef.current) {
-                clearInterval(t);
-                res();
-              }
-            }, 100);
-          });
-        await waitForProto();
-
-        const metaDecoded = await fetchGameMeta(gameId);
-        console.log('🚀 ~ init ~ metaDecoded:', metaDecoded);
-        setGameMeta(metaDecoded);
-
-        const initial = await fetchInitialDraws(gameId, 5);
-        console.log('🚀 ~ init ~ initial:', initial);
-        setLastDraws(initial.results);
-      } catch (e) {
-        console.error('init error', e);
-      } finally {
-        setLoading(false);
+  const init = async (initialFetch = true) => {
+    try {
+      if (!gameId) {
+        console.warn('No gameId in URL');
+        return;
       }
-    };
+      if (initialFetch) {
+        setLoading(true);
+      } else {
+        setLotteryLoading(true);
+      }
+
+      const waitForProto = () =>
+        new Promise((res) => {
+          const t = setInterval(() => {
+            if (rootRef.current) {
+              clearInterval(t);
+              res();
+            }
+          }, 100);
+        });
+      await waitForProto();
+
+      const metaDecoded = await fetchGameMeta(gameId);
+      console.log('🚀 ~ init ~ metaDecoded:', metaDecoded);
+      setGameMeta(metaDecoded);
+
+      const initial = await fetchInitialDraws(gameId, 5);
+      console.log('🚀 ~ init ~ initial:', initial);
+      setLastDraws(initial.results);
+
+      return initial.results;
+    } catch (e) {
+      console.error('init error', e);
+    } finally {
+      setLoading(false);
+      setLotteryLoading(false);
+    }
+  };
+  useEffect(() => {
     init();
   }, [gameId, fetchGameMeta, fetchInitialDraws]);
 
@@ -204,5 +213,5 @@ export default function useGameDraws(gameId) {
     };
   }, [gameId, gameMeta]);
 
-  return { gameMeta, lastDraws, loading };
+  return { gameMeta, lastDraws, init, loading, lotteryLoading };
 }

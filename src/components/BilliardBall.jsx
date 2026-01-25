@@ -1,15 +1,17 @@
 import React from "react";
 
 
-const BilliardBall = ({ ballNo, color = 'purple' }) => {
+const BilliardBall = ({ ballNo, color = 'purple', className }) => {
 
     return (
         <div
-            className="billiard-ball w-6.25 h-6.25 rounded-full flex justify-center items-center"
+            className={`billiard-ball w-[28px] h-[28px] rounded-full flex justify-center items-center ${className}`}
             data-snooker={color}
         >
-            <div className="w-3.75 h-3.75 bg-white rounded-full text-black flex items-center justify-center text-[9px]/[6px] font-bold">
-                {ballNo}
+            <div className="w-[14px] h-[14px] bg-white rounded-full text-black flex items-center justify-center font-bold">
+                <p className="!text-[9px]/[10px] h-[10px]">
+                    {ballNo}
+                </p>
             </div>
         </div>
     );

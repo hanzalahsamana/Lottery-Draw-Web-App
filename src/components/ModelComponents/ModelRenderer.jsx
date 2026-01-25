@@ -9,22 +9,22 @@ const ModelRenderer = ({ secondsLeft }) => {
     const [isActive, setIsActive] = useState(false);
     const triggeredRef = useRef(false);
 
-    useEffect(() => {
-        if (secondsLeft === 0 && !triggeredRef.current) {
-            triggeredRef.current = true;
-            setIsActive(true);
-            announceNumbers([2, 3, 4, 5, 6, 7]);
+    // useEffect(() => {
+    //     if (secondsLeft === 0 && !triggeredRef.current) {
+    //         triggeredRef.current = true;
+    //         setIsActive(true);
+    //         announceNumbers([2, 3, 4, 5, 6, 7]);
 
-            const timer = setTimeout(() => {
-                setIsActive(false);
-                triggeredRef.current = false;
-            }, 10000);
+    //         const timer = setTimeout(() => {
+    //             setIsActive(false);
+    //             triggeredRef.current = false;
+    //         }, 10000);
 
-        }
-    }, [secondsLeft]);
-
+    //     }
+    // }, [secondsLeft]);
+    // ${isActive ? "bg-[#ffffff29] backdrop-blur-sm scale-[3.5] " : "scale-100 backdrop-blur-none bg-transparent "}
     return (
-        <div className={`w-100 h-150 relative flex items-start justify-start transition-all duration-[1.5s] z-1000 origin-[90%_60%] ${isActive ? "bg-[#ffffff29] backdrop-blur-sm scale-[3.5] " : "scale-100 backdrop-blur-none bg-transparent "}`}>
+        <div className={`w-100 h-150 relative flex items-start justify-start transition-all duration-[1.5s] z-1000 origin-[90%_60%] `}>
             <Canvas
                 shadows
                 dpr={[1, 2]}
