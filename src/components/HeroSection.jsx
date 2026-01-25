@@ -9,17 +9,17 @@ const games = [
     {
         name: 'Bingo',
         subText: 'Card game',
-        image: '/GameLogos/bingo.jpg',
+        image: '/GameLogos/bingo2.jpg',
     },
     {
         name: 'Winner',
         subText: 'Who will be?',
-        image: '/GameLogos/winner.jpg',
+        image: '/GameLogos/winner2.jpg',
     },
     {
         name: 'Lottery',
         subText: 'Luck depends',
-        image: '/GameLogos/lottery.jpg',
+        image: '/GameLogos/lottery2.jpg',
     },
 ]
 
