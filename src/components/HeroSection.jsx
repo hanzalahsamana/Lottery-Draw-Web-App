@@ -1,7 +1,7 @@
 import ModelRenderer from './ModelComponents/ModelRenderer'
-import Bingo from '/GameLogos/Bingo.jpg';
-import Winner from '/GameLogos/Winner.jpg';
-import Lottery from '/GameLogos/Lottery.jpg';
+import Bingo from '../../public/GameLogos/Bingo.jpg';
+import Winner from '../../public/GameLogos/Winner.jpg';
+import Lottery from '../../public/GameLogos/Lottery.jpg';
 
 const games = [
     {
