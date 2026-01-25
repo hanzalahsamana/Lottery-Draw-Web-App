@@ -1,12 +1,21 @@
 @import "tailwindcss";
 
+/* .HeroSection {
+    background-image: url("/blackball.png"), url("/yellowball.png"), url("/redball.png"), url("./assets/mesh-gradient.svg");
+    background-repeat: no-repeat;
+    background-size: 350px, 350px, 150px, cover;
+    background-position: -10% 180%, 20% 90%, -5% -10%, center;
+} */
 .HeroSection {
     background-image: url("./assets/mesh-gradient.svg");
     background-repeat: no-repeat;
-    /* background-color: black; */
     background-size: cover;
-    /* contain / auto */
     background-position: center;
+}
+
+
+#mask {
+    filter: drop-shadow(0 0 0.75rem rgb(0, 0, 0));
 }
 
 

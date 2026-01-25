@@ -42,8 +42,8 @@ const BackgroundAudio = ({ audioUrl = '/backgoundAudio.mp3' }) => {
     };
 
     return (
-        <div className="fixed top-[20px] left-[20px] cursor-pointer z-30">
-            <div className="text-[24px] text-[#fff]" onClick={toggleAudio}>
+        <div className="fixed top-5 left-5 cursor-pointer z-30">
+            <div className="text-[24px] text-white" onClick={toggleAudio}>
                 {isPlaying ? <HiOutlineSpeakerWave strokeWidth={1.8} size={30} /> : <HiOutlineSpeakerXMark strokeWidth={1.8} size={30} />}
             </div>
         </div>

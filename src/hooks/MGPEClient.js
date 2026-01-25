@@ -1,6 +1,6 @@
 // mgpeClient.js
-import axios from "axios";
-import protobuf from "protobufjs";
+import axios from 'axios';
+import protobuf from 'protobufjs';
 
 export function getHandler(reqType, resType) {
   const instance = axios.create();
@@ -14,14 +14,14 @@ export function getHandler(reqType, resType) {
   });
 
   instance.interceptors.response.use((response) => {
-    const responseCode = response.headers["response_code"];
+    const responseCode = response.headers['response_code'];
 
-    if (responseCode == 200) {
+    if (responseCode == 200 || responseCode == 6000) {
       if (response.data && resType) {
         response.data = resType.decode(new Uint8Array(response.data));
       }
     } else {
-      console.error("MGPE Error:", responseCode);
+      console.error('MGPE Error:', response, JSON.stringify(response, null, 2));
     }
 
     return response;

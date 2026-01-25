@@ -1,17 +1,3 @@
-// ttsAnnouncer.js
-
-/**
- * Speak numbers using Web Speech API with configurable timing
- * @param {number[]} numbers - Array of numbers to announce
- * @param {object} options - Config options
- * @param {number} options.totalDuration - total duration to finish announcing all numbers (ms)
- * @param {number} options.startDelay - delay before starting (ms)
- * @param {number} options.endDelay - delay after last number (ms)
- * @param {string} options.voiceName - preferred female voice name keyword
- * @param {number} options.volume - 0 to 1
- * @param {number} options.rate - speed of speech
- * @param {number} options.pitch - voice pitch
- */
 export const announceNumbers = (
   numbers = [],
   {

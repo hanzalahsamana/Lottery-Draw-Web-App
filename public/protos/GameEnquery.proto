@@ -4,6 +4,7 @@ package net.mpos.portal.entry;
 
 option java_package = "net.mpos.mc.entry";
 option java_outer_classname = "GameEnquery";
+
 message ReqGameEnquery{
 	required int32 game_type_id=1;
 	optional string game_id=2;

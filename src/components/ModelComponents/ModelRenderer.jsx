@@ -3,39 +3,31 @@ import { Canvas } from "@react-three/fiber";
 import { Suspense, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import Model from "./Model";
-import logo from '/GameLogos/slot.png';
 import { announceNumbers } from "../../hooks/ttsAnnouncer";
-
 
 const MACHINE_URL = "/Compelet_Machine_Model_Textures/Machine_Model_Textures/Lottery Simulator6.glb";
 const Ball_URL = "/Compelet_Machine_Model_Textures/Ball_Model_Textures/Ball_Mdl_001.glb";
 
-// {/* <img src={logo} alt="" className='w-[130px] absolute bottom-[70px] z-[1] left-[140px]' /> */}
 const ModelRenderer = ({ secondsLeft }) => {
-    const [isActive, setIsActive] = useState(false); // controls hover-like animation
-
-    const triggeredRef = useRef(false); // tracks if we already triggered for current zero
+    const [isActive, setIsActive] = useState(false);
+    const triggeredRef = useRef(false);
 
     useEffect(() => {
         if (secondsLeft === 0 && !triggeredRef.current) {
-            triggeredRef.current = true;  // mark as triggered
+            triggeredRef.current = true;
             setIsActive(true);
             announceNumbers([2, 3, 4, 5, 6, 7]);
 
-            // Revert after 10 seconds
             const timer = setTimeout(() => {
                 setIsActive(false);
-                triggeredRef.current = false; // reset for next zero-hit
+                triggeredRef.current = false;
             }, 10000);
 
-            // return () => clearTimeout(timer);
         }
     }, [secondsLeft]);
 
     return (
-        <div
-            className={`w-[400px] h-[600px] relative flex items-start justify-start transition-all duration-[1.5s] z-[1000] origin-[90%_60%] ${isActive ? "bg-[#ffffff29] backdrop-blur-sm scale-[3.5] " : "scale-100 backdrop-blur-none bg-transparent "}`}
-        >
+        <div className={`w-100 h-150 relative flex items-start justify-start transition-all duration-[1.5s] z-1000 origin-[90%_60%] ${isActive ? "bg-[#ffffff29] backdrop-blur-sm scale-[3.5] " : "scale-100 backdrop-blur-none bg-transparent "}`}>
             <Canvas
                 shadows
                 dpr={[1, 2]}
