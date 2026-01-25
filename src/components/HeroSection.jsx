@@ -1,23 +1,20 @@
 import ModelRenderer from './ModelComponents/ModelRenderer'
-import Bingo from '../../public/GameLogos/Bingo.jpg';
-import Winner from '../../public/GameLogos/Winner.jpg';
-import Lottery from '../../public/GameLogos/Lottery.jpg';
 
 const games = [
     {
         name: 'Bingo',
         subText: 'Card game',
-        image: Bingo,
+        image: '/GameLogos/Bingo.jpg',
     },
     {
         name: 'Winner',
         subText: 'Who will be?',
-        image: Winner,
+        image: '/GameLogos/Winner.jpg',
     },
     {
         name: 'Lottery',
         subText: 'Luck depends',
-        image: Lottery,
+        image: '/GameLogos/Lottery.jpg',
     },
 ]
 
