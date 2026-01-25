@@ -1,21 +1,15 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import protobuf from 'protobufjs';
 import { Client } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
 import { getHandler } from './MGPEClient';
+import { PROTO_PATH, RABBIT_WS, RABBIT_TOPIC, RABBIT_USER, RABBIT_PASS, RABBIT_HOST } from '../constants/constant';
+import { getGameMetaData } from '../apis/getGameMetaData';
+import { getDrawResults } from '../apis/getDrawResults';
 
-const MGPE_URL = import.meta.env.VITE_REACT_APP_MGPE;
-const MGPE_TOKEN = import.meta.env.VITE_REACT_APP_MGPE_AUTH_TOKEN;
-const RABBIT_WS = import.meta.env.VITE_REACT_APP_RABBITMQ_WS;
-const RABBIT_TOPIC = import.meta.env.VITE_REACT_APP_RABBITMQ_STOMP_TOPIC;
-const RABBIT_USER = import.meta.env.VITE_REACT_APP_RABBITMQ_USER;
-const RABBIT_PASS = import.meta.env.VITE_REACT_APP_RABBITMQ_PASS;
-const RABBIT_HOST = import.meta.env.VITE_REACT_APP_RABBITMQ_HOST;
-const PROTO_PATH = ['/protos/GameResult.proto', '/protos/GameEnquery.proto'];
-
-export default function useGameDraws() {
+export default function useGameDraws(gameId) {
   const [gameMeta, setGameMeta] = useState(null);
-  const [lastDraws, setLastDraws] = useState([]); // newest first
+  const [lastDraws, setLastDraws] = useState([]);
+  const [loading, setLoading] = useState([]);
   const rootRef = useRef(null);
   const stompClientRef = useRef(null);
 
@@ -57,25 +51,10 @@ export default function useGameDraws() {
         drawStatus: 2,
       };
 
-      const fullResponce = await axiosInstance.post('https://demo.alotsystems.com:8000/MGPE/MGPECorePortal', message, {
-        headers: {
-          'Content-Type': 'application/x-protobuf',
-          Accept: 'application/json, text/plain, */*',
-          protocal_version: '1.0',
-          system_id: '1',
-          trans_type: '770',
-          timestamp: String(Date.now()),
-          trace_message_id: `${Date.now()}_770/1`,
-        },
-        responseType: 'arraybuffer',
-      });
-
-      const responce = fullResponce?.data;
-      console.log('🚀 ~ useGameDraws ~ fullResponce:', fullResponce);
-
+      const responce = await getGameMetaData(axiosInstance, message);
       const results = responce.game || [];
 
-      return { raw: responce, results: results.slice(0, 10) };
+      return results[0];
     } catch (error) {
       console.error(error);
       throw error;
@@ -94,38 +73,13 @@ export default function useGameDraws() {
       const message = {
         gameTypeId: 1,
         gameId: String(gameId),
-        startTime: 20260101000000,
-        endTime: 20260114000000,
       };
 
-      const fullResponce = await axiosInstance.post('https://demo.alotsystems.com:8000/MGPE/MGPECorePortal', message, {
-        headers: {
-          'Content-Type': 'application/x-protobuf',
-          Accept: 'application/json, text/plain, */*',
-          protocal_version: '1.0',
-          system_id: '1',
-          trans_type: '680',
-          timestamp: String(Date.now()),
-          trace_message_id: `${Date.now()}_680/1`,
-        },
-        responseType: 'arraybuffer',
-      });
-
-      const responce = fullResponce?.data;
+      const responce = await getDrawResults(axiosInstance, message);
 
       const results = responce.drawResultInfo || [];
-      const mapped = results.map((r) => ({
-        gameId: r.gameId,
-        drawNo: r.drawNo,
-        timestamp: r.drawDate || Date.now(),
-        resultNo: r.resultNo || null,
-        presentResultString: r.presentResultString || [],
-        gameTypeId: r.gameTypeId,
-        gameName: r.gameName,
-        ...r,
-      }));
 
-      return { raw: responce, results: mapped.slice(0, 10) };
+      return { results: results.slice(0, 5) };
     } catch (error) {
       console.error(error);
       throw error;
@@ -135,12 +89,11 @@ export default function useGameDraws() {
   useEffect(() => {
     const init = async () => {
       try {
-        const params = new URLSearchParams(window.location.search);
-        const gameId = params.get('gameId');
         if (!gameId) {
           console.warn('No gameId in URL');
           return;
         }
+        setLoading(true);
 
         const waitForProto = () =>
           new Promise((res) => {
@@ -159,14 +112,15 @@ export default function useGameDraws() {
 
         const initial = await fetchInitialDraws(gameId, 5);
         console.log('🚀 ~ init ~ initial:', initial);
-        // newest first
         setLastDraws(initial.results);
       } catch (e) {
         console.error('init error', e);
+      } finally {
+        setLoading(false);
       }
     };
     init();
-  }, [fetchGameMeta, fetchInitialDraws]);
+  }, [gameId, fetchGameMeta, fetchInitialDraws]);
 
   useEffect(() => {
     if (!rootRef.current) return;
@@ -182,10 +136,13 @@ export default function useGameDraws() {
         host: RABBIT_HOST,
       },
       reconnectDelay: 5000,
+      heartbeatIncoming: 10000,
+      heartbeatOutgoing: 10000,
+      logRawCommunication: false,
+      debug: (msg) => console.log('STOMP DEBUG:', msg),
       onConnect: (e) => {
         console.log('🚀 ~ useGameDraws ~ message:', e);
         const sub = client.subscribe(RABBIT_TOPIC, (message) => {
-          // StompJS exposes binaryBody for binary frames
           const body = message.binaryBody || message.body;
           if (!body) return;
           let uint8;
@@ -219,10 +176,9 @@ export default function useGameDraws() {
                   resultNo: d.resultNo || null,
                   presentResultString: d.presentResultString || [],
                 };
-                // optionally filter by gameId in URL
-                const params = new URLSearchParams(window.location.search);
-                const urlGameId = params.get('gameId');
-                if (!urlGameId || urlGameId === mapped.game_id) pushDraw(mapped);
+                if (!gameId || String(gameId) === String(mapped.game_id)) {
+                  pushDraw(mapped);
+                }
               });
             }
           } catch (err) {
@@ -237,13 +193,16 @@ export default function useGameDraws() {
 
     stompClientRef.current = client;
     client.activate();
+    // client.debug = (str) => {
+    //   console.log('STOMP DEBUG:', str);
+    // };
 
     return () => {
       try {
         stompClientRef.current && stompClientRef.current.deactivate();
       } catch (e) {}
     };
-  }, [pushDraw]);
+  }, [gameId, gameMeta]);
 
-  return { gameMeta, lastDraws };
+  return { gameMeta, lastDraws, loading };
 }

@@ -6,7 +6,7 @@ import Home from './pages/Home.jsx';
 import Game from './pages/Game.jsx';
 
 function App() {
-  const draws = useGameDraws()
+
 
   return (
     <div className='HeroSection max-w-screen min-h-screen h-full overflow-x-hidden'>

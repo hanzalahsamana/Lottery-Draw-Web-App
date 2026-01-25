@@ -1,16 +1,15 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { useGLTF, } from "@react-three/drei";
 import * as THREE from "three";
 
 
-export const SpinningBalls = ({ scene, count = 25, ballScale = 1, ballUrl = '', ballTexture }) => {
+export const SpinningBalls = ({ scene, count = 25, ballScale = 1, ballScene, ballTexture }) => {
 
     const instRef = useRef(null);
     const ballsStateRef = useRef([]);
     const drumAnchorRef = useRef(null);
 
-    const { scene: ballScene } = useGLTF(ballUrl);
+    // const { scene: ballScene } = useGLTF(ballUrl);
 
     const tempMatrix = useMemo(() => new THREE.Object3D(), []);
     const tempQuat = useMemo(() => new THREE.Quaternion(), []);
@@ -75,38 +74,53 @@ export const SpinningBalls = ({ scene, count = 25, ballScale = 1, ballUrl = '', 
         return v;
     }
 
-    function extractSingleBallMesh(ballScene, texture) {
-        let mesh = null;
-        ballScene.traverse((node) => {
-            if (node.isMesh && !mesh) mesh = node;
-        });
-        if (!mesh) throw new Error("No ball mesh found in ball GLB");
+   function extractSingleBallMesh(ballScene, texture, sizeMultiplier = 1) {
+    let mesh = null;
 
-        // clone geometry & material for instanced usage
-        const geometry = mesh.geometry.clone();
-        const material = Array.isArray(mesh.material) ? mesh.material[0].clone() : mesh.material.clone();
+    ballScene.traverse((node) => {
+        if (node.isMesh && !mesh) mesh = node;
+    });
 
-        // apply the texture if provided
-        if (texture) {
-            material.map = texture;
-            material.needsUpdate = true;
-        }
+    if (!mesh) throw new Error("No ball mesh found in ball GLB");
 
-        // material tweaks
-        material.side = THREE.FrontSide;
-        material.transparent = material.transparent ?? true;
-        material.depthWrite = true;
-        if (material.map) {
-            material.map.encoding = THREE.sRGBEncoding;
-            material.map.anisotropy = Math.min(16, material.map.anisotropy || 1);
-        }
+    const geometry = mesh.geometry.clone();
+
+    // ✅ CENTER GEOMETRY FIRST (CRITICAL)
+    geometry.computeBoundingBox();
+    const center = new THREE.Vector3();
+    geometry.boundingBox.getCenter(center);
+    geometry.translate(-center.x, -center.y, -center.z);
+
+    // ✅ SCALE AROUND CENTER
+    geometry.scale(sizeMultiplier, sizeMultiplier, sizeMultiplier);
+
+    // ✅ MOVE BACK TO ORIGINAL POSITION
+    geometry.translate(center.x, center.y, center.z);
+
+    geometry.computeBoundingSphere();
+    geometry.computeBoundingBox();
+
+    const material = Array.isArray(mesh.material)
+        ? mesh.material[0].clone()
+        : mesh.material.clone();
+
+    if (texture) {
+        material.map = texture;
         material.needsUpdate = true;
-
-        mesh.scale.setScalar(1);
-        geometry.computeBoundingSphere();
-
-        return { geometry, material, originalMesh: mesh };
     }
+
+    material.side = THREE.FrontSide;
+    material.transparent = material.transparent ?? true;
+    material.depthWrite = true;
+
+    if (material.map) {
+        material.map.encoding = THREE.sRGBEncoding;
+        material.map.anisotropy = Math.min(16, material.map.anisotropy || 1);
+    }
+
+    return { geometry, material, originalMesh: mesh };
+}
+
 
     useEffect(() => {
         if (!drumInfo || !scene) return;
@@ -255,24 +269,24 @@ export const SpinningBalls = ({ scene, count = 25, ballScale = 1, ballUrl = '', 
 
             for (let i = 0; i < states.length; i++) {
                 const b = states[i];
-                
+
                 // ---- tangential jitter ----
                 const jitter = randomInsideUnitSphere().multiplyScalar(0.01 * dt);
                 const radial = b.pos.clone().normalize();
                 if (radial.lengthSq() === 0) radial.set(1, 0, 0);
                 const tangentialJitter = jitter.sub(radial.multiplyScalar(jitter.dot(radial)));
                 b.vel.add(tangentialJitter);
-                
+
                 // ---- weak center pull ----
                 b.vel.addScaledVector(b.pos, -0.02 * dt);
-                
+
                 // ---- ball separation ----
                 for (let j = i + 1; j < states.length; j++) {
                     const b2 = states[j];
                     const diff = b.pos.clone().sub(b2.pos);
                     const distSq = diff.lengthSq();
                     const minDist = (b.radius + b2.radius) * 0.95;
-                    
+
                     if (distSq > 0 && distSq < minDist * minDist) {
                         const dist = Math.sqrt(distSq) || 0.0001;
                         diff.normalize();
@@ -282,7 +296,7 @@ export const SpinningBalls = ({ scene, count = 25, ballScale = 1, ballUrl = '', 
                         b2.vel.sub(push);
                     }
                 }
-                
+
                 // ---- integrate ----
                 b.pos.addScaledVector(b.vel, dt);
 
@@ -298,21 +312,21 @@ export const SpinningBalls = ({ scene, count = 25, ballScale = 1, ballUrl = '', 
                 // ---- vertical clamp ----
                 const yLimit = Math.max(0.0001, yHalfLocal - b.radius);
                 b.pos.y = THREE.MathUtils.clamp(b.pos.y, -yLimit, yLimit);
-                
+
                 // ---- damping ----
                 b.vel.multiplyScalar(0.1);
-                
+
                 // ---- rotation ----
                 b.ang.x += b.angVel.x * dt;
                 b.ang.y += b.angVel.y * dt;
                 b.ang.z += b.angVel.z * dt;
-                
+
                 // ---- write instance ----
                 tempObj.position.copy(b.pos);
                 tempObj.quaternion.setFromEuler(b.ang);
                 tempObj.scale.set(ballScale, ballScale, ballScale);
                 tempObj.updateMatrix();
-                
+
                 // if(i >= 3){
                 //     continue
                 // }

@@ -1,43 +1,98 @@
-import { useEffect, useState } from 'react'
-import { Loader } from '@react-three/drei';
+import { useEffect, useState } from 'react';
 import HeroSection from '../components/HeroSection';
 import DrawResults from './../components/DrawResults';
+import useGameDraws from '../hooks/useGameDraws';
+import { WebLoader } from '../components/WebLoader';
+import { gmt8ToLocal } from '../utils/dateUtil';
 
 const Game = () => {
-    const initialSeconds = 7000;
+    const params = new URLSearchParams(window.location.search);
+    const gameId = params.get('game_id');
 
-    const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
+    const { gameMeta, lastDraws, loading } = useGameDraws(gameId);
+
+    const gameInstance = gameMeta?.gameInstance?.[0];
+
+    const [secondsLeft, setSecondsLeft] = useState(0);
+    const [isSelling, setIsSelling] = useState(false);
+    const [sellStartTime, setSellStartTime] = useState(null);
 
     useEffect(() => {
+        if (!gameInstance) return;
+
+        const startTimeStr = gameInstance.startSellingTime;
+        const endTimeStr = gameInstance.endSellingTime;
+
+        if (!startTimeStr || !endTimeStr) return;
+
+        const startTime = new Date(gmt8ToLocal(startTimeStr));
+        const endTime = new Date(gmt8ToLocal(endTimeStr));
+
+        setSellStartTime(startTime);
+
+        const now = new Date();
+
+        // ❌ Selling not started OR already ended
+        if (now < startTime || now >= endTime) {
+            setIsSelling(false);
+            setSecondsLeft(0);
+            return;
+        }
+
+        // ✅ Selling active
+        setIsSelling(true);
+
+        const calcSecondsLeft = () => {
+            const diff = Math.floor((endTime - new Date()) / 1000);
+            return diff > 0 ? diff : 0;
+        };
+
+        setSecondsLeft(calcSecondsLeft());
+
         const timer = setInterval(() => {
-            setSecondsLeft((s) => {
-                if (s <= 0) {
-                    return initialSeconds;
+            setSecondsLeft((prev) => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    setIsSelling(false);
+                    return 0;
                 }
-                return s - 1;
+                return prev - 1;
             });
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [initialSeconds]);
+    }, [gameInstance]);
 
+    if (!gameId) {
+        return (
+            <div className="text-red-500 text-xl p-10">
+                ❌ game_id missing in URL
+            </div>
+        );
+    }
+
+    if (loading) {
+        return <WebLoader />;
+    }
 
     return (
         <>
-            <Loader
-                containerStyles={{ background: '#000', zIndex: 1000 }}
-                innerStyles={{ backgroundColor: '#fff' }}
-                barStyles={{ backgroundColor: '#22c55e' }}
-                textStyles={{ color: '#fff', fontSize: 22 }}
-                dataStyles={{ color: '#aaa' }}
-                speed={1}
-            />
             <div className="fixed w-200 h-50 top-1/2 -translate-y-1/2 -right-25 blur-[180px] rounded-full bg-[#0b74e479]"></div>
 
-            <HeroSection secondsLeft={secondsLeft} />
-            <DrawResults secondsLeft={secondsLeft} />
-        </>
-    )
-}
+            <HeroSection
+                secondsLeft={secondsLeft}
+                isSelling={isSelling}
+                sellStartTime={sellStartTime}
+            />
 
-export default Game
+            <DrawResults
+                secondsLeft={secondsLeft}
+                draws={lastDraws}
+                metadata={gameMeta}
+                isSelling={isSelling}
+            />
+        </>
+    );
+};
+
+export default Game;

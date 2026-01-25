@@ -2,62 +2,18 @@ import BilliardBall from './BilliardBall'
 import { AiOutlineDollarCircle } from 'react-icons/ai';
 import AnimationWrapper from './AnimationWrapper';
 import { useEffect, useState } from 'react';
+import { formatDaysHoursMinutesSeconds, formatYYYYMMDD } from '../utils/dateUtil';
 
 const dummyData = [
-    {
-        serial: 1,
-        lotteryId: "#649HF013239",
-        winningNumbers: [2, 3, 4, 5, 6, 7],
-        color: 'purple',
-        time: "11:33 AM, 15 Jan",
-        gameName: '4k',
-    },
-    {
-        serial: 2,
-        lotteryId: "#649HF013240",
-        winningNumbers: [1, 5, 8, 9, 10, 12],
-        color: 'yellow',
-        time: "12:10 PM, 15 Jan",
-        gameName: "5k",
-    },
-    {
-        serial: 3,
-        lotteryId: "#649HF013241",
-        winningNumbers: [3, 4, 6, 7, 8, 9],
-        color: 'red',
-        time: "01:05 PM, 15 Jan",
-        gameName: "10k",
-    },
-    {
-        serial: 4,
-        lotteryId: "#649HF013242",
-        winningNumbers: [2, 4, 6, 8, 10, 12],
-        color: 'blue',
-        time: "02:20 PM, 15 Jan",
-        gameName: "12k",
-    },
-    {
-        serial: 4,
-        lotteryId: "#649HF016572",
-        winningNumbers: [2, 4, 6, 8, 10, 12],
-        color: 'orange',
-        time: "09:10 PM, 15 Jan",
-        gameName: "1k",
-    },
+    'purple',
+    'yellow',
+    'red',
+    'orange',
+    'blue',
 ];
 
 
-const DrawResults = ({ secondsLeft }) => {
-    function formatDaysHoursMinutesSeconds(sec) {
-        const days = Math.floor(sec / 86400);
-        sec %= 86400;
-        const hours = Math.floor(sec / 3600);
-        sec %= 3600;
-        const minutes = Math.floor(sec / 60);
-        const seconds = sec % 60;
-        const pad = (n) => String(n).padStart(2, "0");
-        return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-    }
+const DrawResults = ({ secondsLeft, draws, metadata }) => {
 
     return (
         <AnimationWrapper className='bg-transparent w-full py-13.5 px-7.5 overflow-hidden'>
@@ -79,34 +35,33 @@ const DrawResults = ({ secondsLeft }) => {
 
                 <div className="w-full flex flex-col gap-2">
                     <div className="grid grid-cols-6 justify-between pb-3.75 px-5 text-white/60 font-normal text-sm relative">
-                        <p className="flex-1 px-5 text-start">Serial No</p>
-                        <p className="flex-1 px-5 text-center">Lottery ID</p>
+                        <p className="flex-1 px-5 text-start">Draw No</p>
+                        <p className="flex-1 px-5 text-center">Game Name</p>
                         <p className="flex-1 col-span-2 px-5 text-center">Winning Numbers</p>
                         <p className="flex-1 px-5 text-center">Time</p>
-                        <p className="flex-1 px-5 text-end">Winning Amount</p>
+                        <p className="flex-1 px-5 text-end">Special Number</p>
                     </div>
 
-                    {dummyData.map((row, index) => (
-                        <div
-                            key={index}
-                            className={`w-full h-12.5 rounded-lg px-5 text-[13px] text-white/70 grid grid-cols-6 items-center gap-2 ${index % 2 === 0 ? "bg-white/5" : "bg-black/0"} relative`}
-                        >
-                            <div className="px-5 text-start flex-1">{row.serial}</div>
-                            <div className="px-5 text-center flex-1">{row.lotteryId}</div>
+                    {draws?.map((row, index) => {
+                        const winningNumbers = row?.resultNo?.split(",")
+                        const formattedDate = formatYYYYMMDD(row.drawDate)
+                        return (
+                            <div key={index} className={`w-full h-12.5 rounded-lg px-5 text-[13px] text-white/70 grid grid-cols-6 items-center gap-2 ${index % 2 === 0 ? "bg-white/5" : "bg-black/0"} relative`}>
+                                <div className="px-5 text-start flex-1"># {row.drawNo}</div>
+                                <div className="px-5 text-center flex-1">{row?.gameTypeName || 'unknown'}</div>
 
-                            <div className="px-5 col-span-2 flex items-center justify-center gap-2">
-                                {row.winningNumbers.map((num, i) => (
-                                    <BilliardBall key={i} ballNo={num} color={row?.color} />
-                                ))}
-                            </div>
+                                <div className="px-5 col-span-2 flex items-center justify-center gap-2">
+                                    {winningNumbers.map((num, i) => (
+                                        <BilliardBall key={i} ballNo={num} color={dummyData[index]} />
+                                    ))}
+                                </div>
 
-                            <div className="px-5 flex-1 text-center">{row.time}</div>
-                            <div className="px-5 flex-1 text-end text-white/80  flex items-center justify-end gap-1.5">
-                                <AiOutlineDollarCircle className='text-white/70' size={16} />
-                                <span className='w-5 text-start'>{row.gameName}</span>
+                                <div className="px-5 flex-1 text-center">{formattedDate || 'no-record'}</div>
+                                <div className="px-5 flex-1 text-center">{row?.speciaNo || 'unknown'}</div>
+
                             </div>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
 
             </div>
