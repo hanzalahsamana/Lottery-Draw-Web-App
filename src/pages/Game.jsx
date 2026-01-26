@@ -13,31 +13,30 @@ const Game = () => {
     const gameId = params.get('game_id');
 
     const { gameMeta, lastDraws, init, loading, lotteryLoading } = useGameDraws(gameId);
-
     const gameInstance = gameMeta?.gameInstance?.[0];
 
     const [secondsLeft, setSecondsLeft] = useState(0);
     const [isSelling, setIsSelling] = useState(false);
     const [sellStartTime, setSellStartTime] = useState(null);
-
-
     const [isActive, setIsActive] = useState(false);
-    const triggeredRef = useRef(false);
-
-    // reveal state for showing balls one-by-one
     const [revealedCount, setRevealedCount] = useState(0);
+
+    const triggeredRef = useRef(false);
     const revealIntervalRef = useRef(null);
     const hideTimeoutRef = useRef(null);
     const [firstFetchDone, setFirstFetchDone] = useState(false);
+    const lotteryRef = useRef();
 
-    // when the API finishes first fetch, mark it done
+
+    const triggerDraw = (result = [1, 4, 6, 8, 10, 12]) => {
+        lotteryRef.current?.startDraw(result);
+    };
+
     useEffect(() => {
         if (!loading && gameMeta) {
-            console.log("🚀🚀🚀 ~ Game ~ gameMeta:", gameMeta)
             setFirstFetchDone(true);
         }
     }, [loading, gameMeta]);
-
 
     useEffect(() => {
         if (!gameInstance) return;
@@ -70,7 +69,6 @@ const Game = () => {
         };
 
         setSecondsLeft(calcSecondsLeft());
-
         const timer = setInterval(() => {
             setSecondsLeft((prev) => {
                 if (prev <= 1) {
@@ -106,8 +104,6 @@ const Game = () => {
         }
     }, [secondsLeft, lotteryLoading, firstFetchDone, init]);
 
-
-    // when the fetch finishes (lotteryLoading -> false) AND bar is active, start revealing
     useEffect(() => {
         // only start reveal when bar is active and fetching is done
         if (!isActive) return;
@@ -134,6 +130,9 @@ const Game = () => {
         }
         setRevealedCount(0);
 
+        console.log("🚀 ~ Game ~ parsed:", parsed)
+        triggerDraw(parsed)
+
         let idx = 0;
         revealIntervalRef.current = setInterval(() => {
             // reveal current ball
@@ -157,7 +156,7 @@ const Game = () => {
                     setRevealedCount(0);
                 }, 2000);
             }
-        }, 2000); // delay between each ball (change 2000 to your preferred ms)
+        }, 3000); // delay between each ball (change 2000 to your preferred ms)
 
         // cleanup on unmount or dependencies change
         return () => {
@@ -171,8 +170,6 @@ const Game = () => {
         };
     }, [lotteryLoading, isActive, lastDraws]);
 
-
-    // cleanup on unmount
     useEffect(() => {
         return () => {
             if (revealIntervalRef.current) clearInterval(revealIntervalRef.current);
@@ -184,7 +181,7 @@ const Game = () => {
     if (!gameId) {
         return (
             <div className="text-red-500 text-xl p-10">
-                ❌ game_id missing in URL
+                game_id missing in URL
             </div>
         );
     }
@@ -195,13 +192,14 @@ const Game = () => {
 
     return (
         <>
-            <div className="fixed w-200 h-50 top-1/2 -translate-y-1/2 -right-25 blur-[180px] rounded-full bg-[#0b74e479]"></div>
+            <div className="fixed w-200 h-50 top-1/2 -translate-y-1/2 -right-25 blur-[180px] rounded-full bg-[#c70be479]"></div>
 
             <HeroSection
                 secondsLeft={secondsLeft}
                 isSelling={isSelling}
                 sellStartTime={sellStartTime}
                 gameMeta={gameInstance}
+                ref={lotteryRef}
             />
 
             <DrawResults
@@ -227,6 +225,7 @@ const Game = () => {
                         <div className="absolute w-[4px] h-[4px] top-[10px] left-[14px] bg-gray-700 rounded-full" />
                         <div className="absolute w-[4px] h-[4px] top-[10px] right-[14px] bg-gray-700 rounded-full" />
                         <div className="absolute w-[1.5px] h-[30px] -top-[30px] right-4 bg-gray-700" />
+                        {/* <p className='text-white/80 text-[10px] absolute top-0.5 left-10'>Result For #0129392</p> */}
                         {lotteryLoading ? (
                             <p className='text-white/70 text-xs'>Loading Result...</p>
                         ) : (

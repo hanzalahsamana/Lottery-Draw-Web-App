@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import protobuf from 'protobufjs';
 import { Client } from '@stomp/stompjs';
-import { getHandler } from './MGPEClient';
+import { getHandler } from '../apis/MGPEClient';
 import { PROTO_PATH, RABBIT_WS, RABBIT_TOPIC, RABBIT_USER, RABBIT_PASS, RABBIT_HOST } from '../constants/constant';
 import { getGameMetaData } from '../apis/getGameMetaData';
 import { getDrawResults } from '../apis/getDrawResults';
@@ -112,11 +112,9 @@ export default function useGameDraws(gameId) {
       await waitForProto();
 
       const metaDecoded = await fetchGameMeta(gameId);
-      console.log('🚀 ~ init ~ metaDecoded:', metaDecoded);
       setGameMeta(metaDecoded);
 
       const initial = await fetchInitialDraws(gameId, 5);
-      console.log('🚀 ~ init ~ initial:', initial);
       setLastDraws(initial.results);
 
       return initial.results;
@@ -148,9 +146,7 @@ export default function useGameDraws(gameId) {
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
       logRawCommunication: false,
-      debug: (msg) => console.log('STOMP DEBUG:', msg),
       onConnect: (e) => {
-        console.log('🚀 ~ useGameDraws ~ message:', e);
         const sub = client.subscribe(RABBIT_TOPIC, (message) => {
           const body = message.binaryBody || message.body;
           if (!body) return;
@@ -202,9 +198,6 @@ export default function useGameDraws(gameId) {
 
     stompClientRef.current = client;
     client.activate();
-    // client.debug = (str) => {
-    //   console.log('STOMP DEBUG:', str);
-    // };
 
     return () => {
       try {

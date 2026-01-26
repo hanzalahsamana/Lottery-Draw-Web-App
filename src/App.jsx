@@ -1,6 +1,5 @@
 import './App.css'
 import BackgroundAudio from './components/BackgroundAudio.jsx';
-import useGameDraws from './hooks/useGameDraws';
 import { Route, Routes } from 'react-router-dom';
 import Home from './pages/Home.jsx';
 import Game from './pages/Game.jsx';

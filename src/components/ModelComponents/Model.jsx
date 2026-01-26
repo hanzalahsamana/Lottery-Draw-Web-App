@@ -1,15 +1,15 @@
 import { useAnimations } from "@react-three/drei";
-import { useEffect, useRef } from "react";
+import { forwardRef, useEffect, useRef } from "react";
 import { FitAndPrepareModel } from "./FitAndPrepareModel";
-import { SpinningBalls } from "./SpinningBalls";
+import SpinningBalls from "./SpinningBalls";
 import * as THREE from "three";
 import { useSharedModels } from "../../hooks/useSharedModels";
 
-const Model = ({ playSequence = [] }) => {
-  const ref = useRef();
+const Model = forwardRef(({ playSequence = [] }, ref) => {
+  const animationRef = useRef();
   const { machine, ball } = useSharedModels();
   const { scene, animations } = machine;
-  const { actions } = useAnimations(animations, ref);
+  const { actions } = useAnimations(animations, animationRef);
 
   const texture = new THREE.TextureLoader().load(`/Compelet_Machine_Model_Textures/Ball_Model_Textures/${51}.png`);
   // texture.encoding = THREE.sRGBEncoding;
@@ -47,18 +47,19 @@ const Model = ({ playSequence = [] }) => {
   }, [scene, actions, playSequence]);
 
   return (
-    <group ref={ref} dispose={null}>
+    <group ref={animationRef} dispose={null}>
       <primitive object={scene} />
       <FitAndPrepareModel gltfScene={scene} desiredSize={40} />
       <SpinningBalls
         ballScale={1}
-        count={40}
+        count={51}
         scene={scene}
         ballScene={ball.scene}
         ballTexture={texture} // reuse
+        ref={ref}
       />
     </group>
   );
-};
+});
 
 export default Model;
