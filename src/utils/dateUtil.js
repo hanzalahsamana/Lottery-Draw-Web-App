@@ -12,7 +12,17 @@ export function generateTimestamp() {
 }
 
 export function gmt8ToLocal(timeStr) {
-  const iso = timeStr.replace(' ', 'T') + '+08:00';
+  // Get local timezone offset in hours
+  const localOffset = new Date().getTimezoneOffset() / -60;
+
+  let iso;
+  if (localOffset === 5) {
+    // For Pakistan, treat input as GMT+8
+    iso = timeStr.replace(' ', 'T') + '+08:00';
+  } else {
+    // For everyone else, parse as-is (local time)
+    iso = timeStr.replace(' ', 'T');
+  }
 
   const date = new Date(iso);
   return date;

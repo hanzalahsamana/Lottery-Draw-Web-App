@@ -1,11 +1,8 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { Control_Ball_Index } from "../../constants/constant";
 
-
-const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene, ballTexture }, ref) => {
-
+const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene, ballTexture, ballTextures }, ref) => {
   const instRef = useRef(null);
   const ballsStateRef = useRef([]);
   const drumAnchorRef = useRef(null);
@@ -17,20 +14,18 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
   const lastSeqRef = useRef(-1);
   const sequenceRef = useRef([]);
 
-  // const { scene: ballScene } = useGLTF(ballUrl);
-
   const tempMatrix = useMemo(() => new THREE.Object3D(), []);
   const tempQuat = useMemo(() => new THREE.Quaternion(), []);
   const tempObj = useMemo(() => new THREE.Object3D(), []);
 
-
   const drumInfo = useMemo(() => {
     if (!scene) return null;
-    const drumMesh = scene.getObjectByName("Glass_Mdl_01002");
+    const drumMesh = scene.getObjectByName("Glass_Mdl_01006");
+    const parent = drumMesh?.parent || scene;
+    if (!drumMesh) return null;
 
     drumMesh.updateWorldMatrix(true, true);
 
-    // world-space bounding box & center/size
     const drumBox = new THREE.Box3().setFromObject(drumMesh, true);
     const drumCenterWorld = new THREE.Vector3();
     drumBox.getCenter(drumCenterWorld);
@@ -39,52 +34,41 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
 
     const trueDiameter = drumSizeWorld.z;
     drumSizeWorld.set(trueDiameter, trueDiameter, trueDiameter);
-
-    const drumRadiusWorld = Math.min(drumSizeWorld.z, drumSizeWorld.z, drumSizeWorld.z) * 0.58; //0.66
-
-    const parent = drumMesh.parent || scene;
+    const drumRadiusWorld = Math.min(drumSizeWorld.x, drumSizeWorld.y, drumSizeWorld.z) * 0.58;
 
     const centerLocal = drumCenterWorld.clone();
     const centerOffset = new THREE.Vector3(0.35, 0, 0);
     centerLocal.add(centerOffset);
     parent.worldToLocal(centerLocal);
 
-
     const rimWorld = drumCenterWorld.clone().add(new THREE.Vector3(drumRadiusWorld, 0, 0));
     const rimLocal = rimWorld.clone();
     parent.worldToLocal(rimLocal);
-    const radiusLocal = rimLocal.distanceTo(centerLocal); // 0.74
+    const radiusLocal = rimLocal.distanceTo(centerLocal);
 
-    // vertical half-size in world -> convert to local to compute y limit
     const topWorld = drumBox.max.clone();
     const topLocal = topWorld.clone();
     parent.worldToLocal(topLocal);
-    const yHalfLocal = Math.abs(topLocal.y - centerLocal.y); //0.93
+    const yHalfLocal = Math.abs(topLocal.y - centerLocal.y);
 
     return {
       drumMesh,
       parent,
-      centerLocal, // parent-local center position
-      drumCenterWorld, // world-space center (useful for conversions)
+      centerLocal,
+      drumCenterWorld,
       drumRadiusWorld,
-      radiusLocal, // in parent-local units (works with anchor children)
+      radiusLocal,
       yHalfLocal,
       drumBox,
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene]);
-
 
   useImperativeHandle(ref, () => ({
     startDraw,
   }));
 
   function startDraw(resultArray) {
-    console.log(resultArray, '🤔🤔');
-
-    // resultArray example: [1, 4, 6, 8, 10, 12]
     if (!Array.isArray(resultArray) || resultArray.length === 0) return;
-
     sequenceRef.current = resultArray;
     seqIndexRef.current = 0;
     animStartRef.current = null;
@@ -102,39 +86,26 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
 
   function extractSingleBallMesh(ballScene, texture, sizeMultiplier = 1) {
     let mesh = null;
-
     ballScene.traverse((node) => {
       if (node.isMesh && !mesh) mesh = node;
     });
-
     if (!mesh) throw new Error("No ball mesh found in ball GLB");
 
     const geometry = mesh.geometry.clone();
-
-    // ✅ CENTER GEOMETRY FIRST (CRITICAL)
     geometry.computeBoundingBox();
     const center = new THREE.Vector3();
     geometry.boundingBox.getCenter(center);
     geometry.translate(-center.x, -center.y, -center.z);
-
-    // ✅ SCALE AROUND CENTER
     geometry.scale(sizeMultiplier, sizeMultiplier, sizeMultiplier);
-
-    // ✅ MOVE BACK TO ORIGINAL POSITION
     geometry.translate(center.x, center.y, center.z);
-
     geometry.computeBoundingSphere();
     geometry.computeBoundingBox();
 
-    const material = Array.isArray(mesh.material)
-      ? mesh.material[0].clone()
-      : mesh.material.clone();
-
+    const material = Array.isArray(mesh.material) ? mesh.material[0].clone() : mesh.material.clone();
     if (texture) {
       material.map = texture;
       material.needsUpdate = true;
     }
-
     material.side = THREE.FrontSide;
     material.transparent = material.transparent ?? true;
     material.depthWrite = true;
@@ -143,10 +114,8 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
       material.map.encoding = THREE.sRGBEncoding;
       material.map.anisotropy = Math.min(16, material.map.anisotropy || 1);
     }
-
     return { geometry, material, originalMesh: mesh };
   }
-
 
   useEffect(() => {
     if (!drumInfo || !scene) return;
@@ -154,13 +123,9 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
 
     const drumAnchor = new THREE.Group();
     drumAnchor.name = "DrumAnchor";
-    // set anchor position in parent local coordinates
     drumAnchor.position.copy(centerLocal);
-
-    // add anchor to same parent as drum mesh
     parent.add(drumAnchor);
 
-    // small child group for instanced mesh (keeps naming safe)
     const container = new THREE.Group();
     container.name = "BallsContainer";
     drumAnchor.add(container);
@@ -175,74 +140,107 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
 
   useEffect(() => {
     if (!ballScene || !drumInfo || !drumAnchorRef.current) return;
+    if (!Array.isArray(ballTextures) || ballTextures.length === 0) {
+      console.warn("No ballTextures provided — fallback to single texture behavior.");
+    }
 
-    const { geometry, material } = extractSingleBallMesh(ballScene, ballTexture);
+    console.log('>>> createInstances useEffect RUN', {
+      count, ballScale,
+      ballTexturesLength: (ballTextures || []).length,
+      drumInfoExists: !!drumInfo,
+      time: Date.now()
+    });
 
-    // create InstancedMesh
-    const inst = new THREE.InstancedMesh(geometry, material, count);
-    inst.instanceMatrix.setUsage(THREE.DynamicDrawUsage); // we'll update every frame
-    inst.castShadow = true;
-    inst.receiveShadow = true;
+    // Reuse geometry but clone base material once
+    const { geometry, material: baseMaterial } = extractSingleBallMesh(ballScene, null);
 
-    // apply a uniform "visual" scale by pre-multiplying the instance matrix on creation and also in updates
-    const visualScale = new THREE.Vector3(ballScale, ballScale, ballScale);
+    const textures = ballTextures || [];
+    const texturesCount = Math.max(1, textures.length); // at least 1
 
-    // attach to anchor container
+    // Count how many instances will go to each texture (round-robin)
+    const perTextureCountByTextureIndex = new Array(texturesCount).fill(0);
+    for (let i = 0; i < count; i++) {
+      const texIdx = i % texturesCount; // round-robin assignment
+      perTextureCountByTextureIndex[texIdx]++;
+    }
+
     const container = drumAnchorRef.current.container;
-    container.add(inst);
-    instRef.current = inst;
 
-    // create initial per-ball states (positions in anchor-local coordinates)
+    // Create InstancedMesh for each texture that has >0 instances
+    const meshes = []; // actual InstancedMesh objects in order
+    const textureIndexToMeshIndex = new Array(texturesCount).fill(-1);
+    for (let t = 0; t < texturesCount; t++) {
+      const n = perTextureCountByTextureIndex[t];
+      if (n <= 0) continue;
+
+      const mat = baseMaterial.clone();
+      if (textures[t]) {
+        mat.map = textures[t];
+        mat.needsUpdate = true;
+        if (mat.map) {
+          mat.map.encoding = THREE.sRGBEncoding;
+          // optional: mat.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        }
+      }
+      mat.side = THREE.FrontSide;
+      mat.transparent = mat.transparent ?? true;
+      mat.depthWrite = true;
+
+      const instMesh = new THREE.InstancedMesh(geometry, mat, n);
+      instMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      instMesh.castShadow = true;
+      instMesh.receiveShadow = true;
+
+      container.add(instMesh);
+      textureIndexToMeshIndex[t] = meshes.length;
+      meshes.push(instMesh);
+    }
+
+    // Build mapping from global instance index -> { meshIndex, localIndex }
+    const instanceMap = new Array(count);
+    const localIndexCounters = new Array(meshes.length).fill(0);
+    const visualScale = new THREE.Vector3(ballScale, ballScale, ballScale);
     const states = [];
     const { parent, drumCenterWorld, centerLocal, drumRadiusWorld } = drumInfo;
 
     for (let i = 0; i < count; i++) {
-      // random point inside world-sphere then convert to parent-local and then to anchor-local
+      const texIdx = i % texturesCount; // round-robin (important)
+      const meshIdx = textureIndexToMeshIndex[texIdx];
+      if (meshIdx === -1) {
+        console.warn('No mesh for texture index', texIdx);
+        continue; // defensive — should not usually happen
+      }
+      const localIndex = localIndexCounters[meshIdx]++;
+
+      // calculate position/velocity etc (same as before)
       const randWorld = randomInsideUnitSphere().multiplyScalar(drumRadiusWorld * (0.9 - Math.random() * 0.05));
       const ballWorld = drumCenterWorld.clone().add(randWorld);
 
-      // local in parent coords
       const ballLocalParent = ballWorld.clone();
       parent.worldToLocal(ballLocalParent);
-
-      // convert to anchor-local by subtracting anchor position (centerLocal)
       const posLocal = ballLocalParent.clone().sub(centerLocal);
 
-      // velocity: create a small random world delta and convert to local (approx by using world->local on position)
       const velWorld = randomInsideUnitSphere().multiplyScalar(0.3 + Math.random() * 0.3);
       const velWorldPoint = drumCenterWorld.clone().add(velWorld);
       const velLocalPoint = velWorldPoint.clone();
       parent.worldToLocal(velLocalPoint);
-      // approximate local velocity by subtracting centerLocal and dividing by 1s unit (since small delta)
       const velLocal = velLocalPoint.clone().sub(centerLocal);
 
-      // small angular rotation and velocity
       const ang = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-      // reduced angVel so they don't spin crazy
       const angVel = new THREE.Vector3(
         (Math.random() - 0.5) * 2.0,
         (Math.random() - 0.5) * 2.0,
         (Math.random() - 0.5) * 2.0
       );
 
-
-      // const tex = ballTextures[i % ballTextures.length];
-      // const mat = Array.isArray(material) ? material[0].clone() : material.clone();
-      // if (tex) {
-      //     mat.map = tex;
-      //     mat.map.encoding = THREE.sRGBEncoding;
-      //     mat.map.anisotropy = Math.min(16, mat.map.anisotropy || 1);
-      // }
-
-      // approximate collision radius in local units (use geometry boundingSphere scaled by visual scale and parent's local transform)
-      let baseRadius = 0.5; // fallback
+      let baseRadius = 0.5;
       if (geometry.boundingSphere) {
         baseRadius = geometry.boundingSphere.radius;
       } else {
         geometry.computeBoundingSphere();
         baseRadius = geometry.boundingSphere ? geometry.boundingSphere.radius : 0.5;
       }
-      const ballRadiusLocal = baseRadius * ballScale; // approx in local units (good enough)
+      const ballRadiusLocal = baseRadius * ballScale;
 
       states.push({
         pos: posLocal,
@@ -253,71 +251,116 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
         mode: "drum",
       });
 
-      // initialize instance transform
+      // set instance matrix on the right mesh with local index
       tempMatrix.position.copy(posLocal);
       tempMatrix.quaternion.copy(tempQuat.setFromEuler(ang));
       tempMatrix.scale.copy(visualScale);
-      tempMatrix.identity && tempMatrix.identity(); // no-op but keep semantics
+
       const tmp = new THREE.Object3D();
       tmp.position.copy(posLocal);
       tmp.quaternion.copy(tempQuat);
       tmp.scale.copy(visualScale);
       tmp.updateMatrix();
-      inst.setMatrixAt(i, tmp.matrix);
+
+      const instMesh = meshes[meshIdx];
+      instMesh.setMatrixAt(localIndex, tmp.matrix);
+
+      // store mapping so useFrame can update correct mesh/local index
+      instanceMap[i] = { meshIndex: meshIdx, localIndex };
     }
 
-    inst.instanceMatrix.needsUpdate = true;
+    // mark all instance matrices updated
+    meshes.forEach((m) => (m.instanceMatrix.needsUpdate = true));
+
+    // store in refs for useFrame
+    instRef.current = { meshes, instanceMap, geometry, baseMaterial };
+
     ballsStateRef.current = states;
 
-    // cleanup: dispose geometry/material if we created clones (material/geometry copied earlier)
+    // cleanup
     return () => {
-      if (inst.parent) inst.parent.remove(inst);
+      if (instRef.current && instRef.current.meshes) {
+        instRef.current.meshes.forEach((m) => {
+          if (m.parent) m.parent.remove(m);
+          try {
+            if (m.material) {
+              m.material.dispose();
+            }
+          } catch (e) { }
+        });
+      }
       try {
         geometry.dispose();
-        material.dispose();
-      } catch (e) {
-        // ignore disposal errors
-      }
+        baseMaterial.dispose();
+      } catch (e) { }
       instRef.current = null;
       ballsStateRef.current = [];
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ballScene, drumInfo, count, ballScale]);
+  }, [ballScene, drumInfo, count, ballScale, ballTextures]);
+
+  // --- NEW: build a pipe curve in ANCHOR-LOCAL space and compute tStart relative to hole ---
+  const pipeCurveRef = useRef(null);
+  const pipeTStartRef = useRef(0);
+
+  // hole position as given by you on the mirror mesh (assumed local to the mirror/drum mesh)
+  // We'll convert it to anchor-local to align with ball positions.
+  const HOLE_LOCAL_ON_MIRROR = new THREE.Vector3(-0.60, -1.12, -0.625);
+
+  useEffect(() => {
+    if (!scene || !drumInfo || !drumAnchorRef.current) return;
+    if (pipeCurveRef.current) return; // 🔒 build ONCE
+
+    const pipe = scene.getObjectByName("pipe");
+    if (!pipe || !pipe.geometry) return;
+
+    pipe.updateWorldMatrix(true, false);
+    const anchor = drumAnchorRef.current.anchor;
+
+    const posAttr = pipe.geometry.attributes.position;
+    const pts = [];
+
+    for (let i = 0; i < posAttr.count / 2; i += 100) {
+      const p = new THREE.Vector3(
+        posAttr.getX(i),
+        posAttr.getY(i),
+        posAttr.getZ(i)
+      );
+
+      p.applyMatrix4(pipe.matrixWorld);
+      anchor.worldToLocal(p);
+
+      pts.push(p);
+    }
+
+    if (pts.length < 4) return;
+
+    const curve = new THREE.CatmullRomCurve3(pts);
+    curve.curveType = "centripetal";
+    curve.closed = false;
+
+    pipeCurveRef.current = curve;
+  }, [scene, drumInfo]);
 
   useFrame((_, dt) => {
-    const inst = instRef.current;
+    const instData = instRef.current;
     const states = ballsStateRef.current;
-
-    if (!(inst && states && states.length > 0 && drumInfo && drumAnchorRef.current)) return;
+    if (!(instData && states && states.length > 0 && drumInfo && drumAnchorRef.current)) return;
 
     const { radiusLocal, yHalfLocal } = drumInfo;
     const safetyRadius = radiusLocal * 0.1;
     const separationStrength = 100;
 
-    // config
-    const sequence = sequenceRef.current; // hard-coded for now
-    const animationTime = 3.0;              // total per ball in seconds
-    const phaseADuration = animationTime * 0.3; // startPos -> path[0]
-    const phaseBDuration = animationTime * 0.7; // path[0] -> exit
-    const zOffset = 0.149;                    // offset between finished balls on Z
-
-    // path (shared)
-    const path = [
-      new THREE.Vector3(-0.60, -1.12, -0.625), // hole (path start)
-      new THREE.Vector3(-0.60, -1.46, -0.625), // drop down
-      new THREE.Vector3(-1.07, -1.46, -0.625), // forward
-      new THREE.Vector3(-1.07, -1.54, -2.4),   // passage end (base)
-    ];
+    const sequence = sequenceRef.current;
+    const animationTime = 3.0;
+    const phaseADuration = animationTime * 0.25;
+    const phaseBDuration = animationTime * 0.75;
+    const zOffset = 0.209;
 
     const seqIndex = seqIndexRef.current;
     const isDone = seqIndex >= sequence.length;
     const CONTROL_INDEX = isDone ? -1 : sequence[seqIndex];
 
-    // if (!sequence || sequence.length === 0) return;
-
-    // Detect new sequence start and capture the precise start pos
     if (lastSeqRef.current !== seqIndex && CONTROL_INDEX !== -1) {
-      // ensure the controlled index exists in states
       if (states[CONTROL_INDEX]) {
         animStartRef.current = performance.now();
         startPosRef.current.copy(states[CONTROL_INDEX].pos);
@@ -325,13 +368,14 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
       }
     }
 
+    const { meshes, instanceMap } = instData; // NEW: grab meshes + mapping
+
     for (let i = 0; i < states.length; i++) {
       const b = states[i];
 
-      // If this ball finished earlier, place it at its stored final position (with offset)
+      // ---------- handle finished sequence / final positions ----------
       const finishedIndex = sequence.indexOf(i);
       if (finishedIndex !== -1 && finishedIndex < seqIndex) {
-        // finishedIndex maps to finalPositionsRef.current[finishedIndex]
         const finalPos = finalPositionsRef.current[finishedIndex];
         if (finalPos) {
           b.pos.copy(finalPos);
@@ -340,21 +384,15 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
           tempObj.quaternion.identity();
           tempObj.scale.set(ballScale, ballScale, ballScale);
           tempObj.updateMatrix();
-          inst.setMatrixAt(i, tempObj.matrix);
+
+          const map = instanceMap[i];
+          if (map) meshes[map.meshIndex].setMatrixAt(map.localIndex, tempObj.matrix);
           continue;
         }
       }
 
-      // CONTROLLED BALL (the one currently animating)
+      // ---------- handle control index (active animated ball) ----------
       if (i === CONTROL_INDEX) {
-
-        // const axis = new THREE.Vector3(0, 0, 1); // local axis of rotation
-        // const angle = dt * 40;           // rotation per frame
-        // const q = new THREE.Quaternion().setFromAxisAngle(axis, angle);
-
-        // tempObj.quaternion.premultiply(q);
-
-        // Safety: ensure animStart was captured; if not, capture now (fallback)
         if (animStartRef.current === null) {
           animStartRef.current = performance.now();
           startPosRef.current.copy(b.pos);
@@ -362,66 +400,55 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
         }
 
         const elapsed = (performance.now() - animStartRef.current) / 1000;
-        // Phase A: move from startPos -> path[0]
+
         if (elapsed < phaseADuration) {
           const rawT = Math.min(elapsed / phaseADuration, 1);
           const t = rawT * rawT * (3 - 2 * rawT); // smoothstep
-          b.pos.lerpVectors(startPosRef.current, path[0], t);
+
+          const anchor = drumAnchorRef.current.anchor;
+          const holeLocalOnMirror = new THREE.Vector3(-0.30, -1.12, -0.625);
+          const holeWorld = holeLocalOnMirror.applyMatrix4(drumInfo.drumMesh.matrixWorld);
+          anchor.worldToLocal(holeWorld);
+          b.pos.lerpVectors(startPosRef.current, holeWorld, t);
         } else {
-          // Phase B: path[0] -> path[last]
+          const curve = pipeCurveRef.current;
           const phaseElapsed = Math.min(elapsed - phaseADuration, phaseBDuration);
           const rawT = Math.min(phaseElapsed / phaseBDuration, 1);
-          const t = rawT * rawT * (3 - 2 * rawT); // smoothstep
+          const t01 = rawT * rawT * (3 - 2 * rawT);
 
-
-          const segments = path.length - 1;
-          const segT = t * segments;
-          const segIndex = Math.min(Math.floor(segT), segments - 1);
-          const localT = segT - segIndex;
-
-          // Compute the final Z offset for this ball
-          const zOffsetValue = zOffset * finalPositionsRef.current.length;
-
-
-
-          // Clone the path positions to avoid modifying originals
-          const startPoint = path[segIndex].clone();
-          const endPoint = path[segIndex + 1].clone();
-          if (segIndex === segments - 1) {
-            endPoint.z += zOffsetValue; // dynamically offset Z
-          }
-
-          // interpolate
-          b.pos.lerpVectors(startPoint, endPoint, localT);
+          const tStart = pipeTStartRef.current || 0;
+          const tGlobal = tStart + (1 - tStart) * t01;
+          const curvePos = curve.getPoint(tGlobal);
+          b.pos.copy(curvePos).add(new THREE.Vector3(-0.5, -0.25, -0.55));
         }
 
-        // freeze physics for controlled ball
         b.vel.set(0, 0, 0);
 
-        // write controlled instance
         tempObj.position.copy(b.pos);
         tempObj.quaternion.identity();
         tempObj.scale.set(ballScale, ballScale, ballScale);
         tempObj.updateMatrix();
-        inst.setMatrixAt(i, tempObj.matrix);
 
-        // on finish: store final position and advance sequence
+        const map = instanceMap[i];
+        if (map) meshes[map.meshIndex].setMatrixAt(map.localIndex, tempObj.matrix);
+
         if (elapsed >= animationTime) {
           animStartRef.current = null;
-          lastSeqRef.current = seqIndex + 1; // so next animation capture logic triggers correctly
+          lastSeqRef.current = seqIndex + 1;
+          seqIndexRef.current = seqIndex + 1;
 
-          // compute this ball's final position with incremental Z offset to avoid overlap
-          const baseFinal = path[path.length - 1];
-          const offsetZ = zOffset * finalPositionsRef.current.length; // 0, 0.3, 0.6...
-          const finalPos = new THREE.Vector3(baseFinal.x, baseFinal.y, baseFinal.z + offsetZ);
+          const baseFinal = (() => {
+            const anchor = drumAnchorRef.current.anchor;
+            const fallback = new THREE.Vector3(-1.230, -2.148, -1.373).applyMatrix4(drumInfo.drumMesh.matrixWorld);
+            anchor.worldToLocal(fallback);
+            return fallback;
+          })();
+
+          const offsetZ = zOffset * finalPositionsRef.current.length;
+          const finalPos = new THREE.Vector3(baseFinal.x + offsetZ, baseFinal.y, baseFinal.z);
           finalPositionsRef.current.push(finalPos);
 
-          // advance to next ball
-          seqIndexRef.current = seqIndex + 1;
-          animStartRef.current = null;
-          lastSeqRef.current = seqIndex + 1;
           if (seqIndexRef.current >= sequence.length) {
-            // Reset everything to allow a new draw
             seqIndexRef.current = 0;
             animStartRef.current = null;
             lastSeqRef.current = -1;
@@ -433,7 +460,7 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
         continue;
       }
 
-      // ------------- normal physics for other balls -------------
+      // ---------- normal physics for other balls ----------
       const jitter = randomInsideUnitSphere().multiplyScalar(0.01 * dt);
       const radial = b.pos.clone().normalize();
       if (radial.lengthSq() === 0) radial.set(1, 0, 0);
@@ -480,16 +507,17 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
       tempObj.quaternion.setFromEuler(b.ang);
       tempObj.scale.set(ballScale, ballScale, ballScale);
       tempObj.updateMatrix();
-      inst.setMatrixAt(i, tempObj.matrix);
+
+      // NEW: write to correct InstancedMesh/local index
+      const map = instanceMap[i];
+      if (map) meshes[map.meshIndex].setMatrixAt(map.localIndex, tempObj.matrix);
     }
 
-    inst.instanceMatrix.needsUpdate = true;
+    // mark all meshes as updated
+    meshes.forEach((m) => (m.instanceMatrix.needsUpdate = true));
   });
-
-
-
 
   return null;
 });
 
-export default SpinningBalls
+export default SpinningBalls;

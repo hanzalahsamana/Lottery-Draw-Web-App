@@ -30,13 +30,13 @@
 }
 
 .billiard-ball {
-    --_color-yellow: hsl(57, 100%, 50%);
+    --_color-yellow: #F5D010;
     --_color-blue: hsl(216, 100%, 58%);
     --_color-red: hsl(0 100% 50%);
     --_color-pink: hsl(325 100% 50%);
     --_color-purple: hsl(259, 87%, 65%);
     --_color-orange: hsl(17 100% 47%);
-    --_color-green: hsl(125 100% 25%);
+    --_color-green: hsl(125, 47%, 54%);
     --_color-brown: hsl(10 100% 25%);
     --_color-black: hsl(0 0% 5%);
     --_color-white: hsl(0 0% 95%);
@@ -46,6 +46,8 @@
     /* box-shadow: -1rem 1rem 1rem hsl(0 0% 0% / .5); */
     background-color: var(--_color-orange);
     background-image: var(--_grad-light);
+
+    box-shadow: 3px 0px 4px #00000065 inset, 0px 2px 6px -1px #000000a0;
 }
 
 

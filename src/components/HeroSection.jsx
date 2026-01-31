@@ -25,16 +25,17 @@ const games = [
 
 const HeroSection = forwardRef(({ secondsLeft, gameMeta }, ref) => {
     return (
-        <div className="md:h-112.5 flex flex-col md:flex-row items-center md:items-center justify-between px-4 sm:px-6 py-6 md:py-0 gap-8 md:gap-0">
+        <div className="md:h-[500px] 2xl:h-[600px] flex flex-col md:flex-row items-center md:items-center justify-between px-4 sm:px-6 py-6 md:py-0 gap-8 md:gap-0">
             {/* Left column: headings and button */}
-            <div className="z-20 flex flex-col gap-1 md:gap-0 mt-10 mb-[-100px] md:mb-0 md:mt-6 w-full md:w-max">
-                <h1 className="font-bold animteUpDown text-[#FEB906] text-[30px] sm:text-[35px] md:text-[50px]/[70px]">
+            <div className="z-20 flex flex-col gap-1 md:gap-0 2xl:gap-4 mt-10 mb-[-100px] md:mb-0 md:mt-6 w-full md:w-max">
+                <h1 className="font-bold animteUpDown text-[#FEB906] text-[30px] sm:text-[35px] md:text-[50px]/[70px] 2xl:text-[70px]/[70px]">
                     Millions in prizes,
                 </h1>
-                <h1 className="font-bold animteUpDown text-[#ffffff] text-[30px] sm:text-[35px] md:text-[50px]/[70px]">
+
+                <h1 className="font-bold animteUpDown text-[#ffffff] text-[30px] sm:text-[35px] md:text-[50px]/[70px] 2xl:text-[70px]/[70px]">
                     Just one ticket away.
                 </h1>
-                <button className="bg-linear-to-b w-full md:w-max animteUpDown from-[#3c049d] to-[#2b0370] text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-md text-sm mt-4">
+                <button className="bg-linear-to-b w-full md:w-max animteUpDown from-[#3c049d] to-[#2b0370] text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-md text-sm 2xl:text-base mt-4">
                     Winnig For #{gameMeta?.drawNo}
                 </button>
 
@@ -61,6 +62,7 @@ const HeroSection = forwardRef(({ secondsLeft, gameMeta }, ref) => {
                     </div>
                 </div>
             </div>
+
             <ModelRenderer secondsLeft={secondsLeft} ref={ref} />
         </div >
     )

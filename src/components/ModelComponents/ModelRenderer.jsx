@@ -6,15 +6,15 @@ import Model from "./Model";
 
 const ModelRenderer = forwardRef(({ secondsLeft }, ref) => {
     return (
-        <div className={`w-[300px] h-[500px] md:w-100 md:h-150 relative flex items-start justify-start transition-all duration-[1.5s] z-1000 origin-[90%_60%] `}>
+        <div className={`w-[300px] h-[500px] md:w-[400px] md:h-[600px] 2xl:h-[700px] md:-mt-[50px] relative flex items-start justify-start transition-all duration-[1.5s] z-1000 origin-[90%_60%] `}>
             <Canvas
                 shadows
                 dpr={[1, 2]}
-                camera={{ fov: 50 }}
+                camera={{ fov: 55 }}
                 onCreated={({ gl }) => {
                     gl.outputEncoding = THREE.sRGBEncoding;
                     gl.toneMapping = THREE.ACESFilmicToneMapping;
-                    gl.toneMappingExposure = 1.2;
+                    gl.toneMappingExposure = 0.4;
                     gl.physicallyCorrectLights = true;
                 }}
                 style={{ width: "100%", height: "100%" }}

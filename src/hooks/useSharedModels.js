@@ -1,7 +1,5 @@
 import { useGLTF } from '@react-three/drei';
-
-const MACHINE_URL = '/Compelet_Machine_Model_Textures/Machine_Model_Textures/Lottery Simulator6.glb';
-const BALL_URL = '/Compelet_Machine_Model_Textures/Ball_Model_Textures/Ball_Mdl_001.glb';
+import { BALL_URL, MACHINE_URL } from '../constants/constant';
 
 // global cache
 let machineCache = null;

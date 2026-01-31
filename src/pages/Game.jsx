@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import HeroSection from '../components/HeroSection';
 import DrawResults from './../components/DrawResults';
 import useGameDraws from '../hooks/useGameDraws';
@@ -7,6 +7,7 @@ import { gmt8ToLocal } from '../utils/dateUtil';
 import BilliardBall from '../components/BilliardBall';
 import { AnimatePresence, motion } from 'framer-motion';
 import { speak } from '../hooks/ttsAnnouncer';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 const Game = () => {
     const params = new URLSearchParams(window.location.search);
@@ -28,8 +29,12 @@ const Game = () => {
     const lotteryRef = useRef();
 
 
-    const triggerDraw = (result = [1, 4, 6, 8, 10, 12]) => {
-        lotteryRef.current?.startDraw(result);
+    const navigate = useNavigate()
+
+
+    const triggerDraw = (result = [2, 3, 4, 5, 6, 7]) => {
+        const adjustedResult = result.map(num => num - 1);
+        lotteryRef.current?.startDraw(adjustedResult);
     };
 
     useEffect(() => {
@@ -130,7 +135,6 @@ const Game = () => {
         }
         setRevealedCount(0);
 
-        console.log("🚀 ~ Game ~ parsed:", parsed)
         triggerDraw(parsed)
 
         let idx = 0;
@@ -179,11 +183,7 @@ const Game = () => {
 
 
     if (!gameId) {
-        return (
-            <div className="text-red-500 text-xl p-10">
-                game_id missing in URL
-            </div>
-        );
+        return navigate('/');
     }
 
     if (loading) {
@@ -201,6 +201,8 @@ const Game = () => {
                 gameMeta={gameInstance}
                 ref={lotteryRef}
             />
+            {/* <button className='fixed bottom-20 right-20 z-10000000 bg-white px-2 py-1 font-semibold w-max rounded-md cursor-pointer hover:opacity-95' onClick={() => triggerDraw([2 - 1, 3 - 1, 4 - 1, 5 - 1, 6 - 1, 7 - 1])}>Click me</button> */}
+
 
             <DrawResults
                 secondsLeft={secondsLeft}
@@ -219,13 +221,12 @@ const Game = () => {
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: -30, opacity: 0 }}
                         transition={{ duration: 0.30, ease: "easeOut" }}
-                        className="fixed flex px-4 items-center justify-evenly rounded-lg top-7 left-1/2 -translate-x-1/2 w-[300px] h-[50px] bg-[#0b1220]"
+                        className="fixed flex flex-col px-4 items-center justify-evenly rounded-lg top-8 left-1/2 -translate-x-1/2 w-[300px] h-[50px] bg-[#0b1220]"
                     >
                         <div className="absolute w-[1px] h-[30px] -top-[30px] left-4 bg-gray-700" />
                         <div className="absolute w-[4px] h-[4px] top-[10px] left-[14px] bg-gray-700 rounded-full" />
                         <div className="absolute w-[4px] h-[4px] top-[10px] right-[14px] bg-gray-700 rounded-full" />
                         <div className="absolute w-[1.5px] h-[30px] -top-[30px] right-4 bg-gray-700" />
-                        {/* <p className='text-white/80 text-[10px] absolute top-0.5 left-10'>Result For #0129392</p> */}
                         {lotteryLoading ? (
                             <p className='text-white/70 text-xs'>Loading Result...</p>
                         ) : (
@@ -239,13 +240,21 @@ const Game = () => {
                                     : [];
                                 const numbers = parsed.length === 6 ? parsed : Array.from({ length: 6 }, (_, i) => i + 2);
 
-                                return numbers.map((num, i) => (
-                                    <div key={i} className="w-[30px] h-[30px] flex items-center  justify-center rounded-full bg-gray-800">
-                                        {i < revealedCount ? (
-                                            <BilliardBall ballNo={num} className={'scale-[1] origin-enter'} />
-                                        ) : null}
-                                    </div>
-                                ));
+                                return (
+                                    <>
+                                        <div className='flex items-center justify-center gap-2'>
+                                            {numbers.map((num, i) => (
+                                                <div key={i} className="w-[30px] h-[30px] flex items-center  justify-center rounded-full bg-gray-800">
+                                                    {i < revealedCount ? (
+                                                        <BilliardBall ballNo={num} className={'scale-[1] origin-enter'} />
+                                                    ) : null}
+                                                </div>
+                                            ))
+                                            }
+                                        </div>
+                                        <p className='text-white/90 text-[11px] absolute -top-5'>Draw For #{lastDraws?.[0]?.drawNo ?? '000000'}</p>
+                                    </>
+                                )
                             })()
                         )}
                     </motion.div>

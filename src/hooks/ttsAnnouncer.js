@@ -43,7 +43,7 @@ export const announceNumbers = (
   });
 };
 
-export const speak = (text, { voiceName = 'female', volume = 1, rate = 0.7, pitch = 1 } = {}) => {
+export const speak = (text, { voiceName = 'male', volume = 1, rate = 0.7, pitch = 1 } = {}) => {
   if (!window.speechSynthesis || !text) return;
 
   const voices = window.speechSynthesis.getVoices();

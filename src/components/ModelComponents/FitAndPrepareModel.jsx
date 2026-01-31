@@ -44,7 +44,7 @@ export const FitAndPrepareModel = ({ gltfScene, desiredSize = 40 }) => {
     });
 
     // position camera to front face and look at the model center
-    const camY = size.y * scale * 0.6;
+    const camY = size.y * scale * 0.7;
     const camZ = Math.max(size.x, size.z) * scale * 2.2 + 0.5;
     camera.position.set(-camZ, camY - 0.8, 0);
     camera.lookAt(0, size.y * scale * 0.60, 0);
