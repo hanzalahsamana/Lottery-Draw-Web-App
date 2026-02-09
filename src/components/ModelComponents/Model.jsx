@@ -14,9 +14,10 @@ const Model = forwardRef(({ playSequence = [] }, ref) => {
   const texture = new THREE.TextureLoader().load(`/Compelet_Machine_Model_Textures/Ball_Model_Textures/${51}.png`);
   texture.encoding = THREE.sRGBEncoding;
   texture.anisotropy = 100;
+
   const textures = useMemo(() => {
     const texArr = [];
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= 50; i++) {
       const no = i;
       const tex = new THREE.TextureLoader().load(`/Compelet_Machine_Model_Textures/Ball_Model_Textures/${no}.png`);
       tex.encoding = THREE.sRGBEncoding;
@@ -27,23 +28,6 @@ const Model = forwardRef(({ playSequence = [] }, ref) => {
   }, []);
 
 
-  const addBorderToMesh = (mesh) => {
-    const borderMaterial = new THREE.MeshBasicMaterial({
-      color: 0x0066ff,
-      side: THREE.BackSide,
-      transparent: true,
-      opacity: 1,
-    });
-
-    const borderMesh = new THREE.Mesh(mesh.geometry, borderMaterial);
-
-    borderMesh.position.copy(mesh.position);
-    borderMesh.rotation.copy(mesh.rotation);
-    borderMesh.scale.copy(mesh.scale).multiplyScalar(1.03); // border thickness
-
-    borderMesh.renderOrder = -1; // render behind
-    mesh.parent.add(borderMesh);
-  };
   const getMirrorMaterial = (oldMat, isBackground) => {
     // 1. Create the new material
     const newMat = new THREE.MeshPhysicalMaterial();
@@ -52,26 +36,34 @@ const Model = forwardRef(({ playSequence = [] }, ref) => {
     newMat.copy(oldMat);
 
     // 3. Override specific properties for the mirror effect
-    newMat.color.set(0xffffff);
-    newMat.metalness = isBackground ? 1 : 4; // Note: metalness max is usually 1
-    newMat.opacity = isBackground ? 0.1 : 0.07;
-    newMat.transparent = true; // Ensure transparency is on if opacity < 1
-    newMat.ior = 1;
-    newMat.roughness = 0; // Essential for a mirror effect
+    // newMat.color.set(0xffffff);
+    // newMat.metalness = isBackground ? 1 : 4; // Note: metalness max is usually 1
+    // newMat.opacity = isBackground ? 0.1 : 1;
+    // newMat.transparent = true; // Ensure transparency is on if opacity < 1
+    // newMat.ior = 1;
+    // newMat.roughness = 0; // Essential for a mirror effect
 
     return newMat;
   };
 
 
   useEffect(() => {
+    console.log("🚀 ~ scene:", scene)
     if (!scene) return;
 
+    // scene.traverse((node) => {
+    //   if (node.isMesh && (node.name === "pipe" || node.name === "Glass_Bowl" || node.name === "Glass_Mdl_01")) {
+    //     node.material = getMirrorMaterial(node.material, node.name === "pipe");
+    //   }
+    // });
     scene.traverse((node) => {
-      if (node.isMesh && (node.name === "pipe" || node.name === "Glass_Mdl_01006" || node.name === "Glass_Mdl_01")) {
-        node.material = getMirrorMaterial(node.material, node.name === "pipe");
+      if (node.isMesh && /^Ball_\d+$/.test(node.name)) {
+        console.log("🚀 ~ node:", node)
+        // node.parent.remove(node);
+        node.visible = false;
+        // if (node.parent) node.parent.remove(node);
       }
     });
-
     const animNames = Object.keys(actions || {});
     if (animNames.length && playSequence.length === 0) {
       actions[animNames[0]]?.reset()?.play();

@@ -25,7 +25,7 @@ const ModelRenderer = forwardRef(({ secondsLeft }, ref) => {
                     <ambientLight intensity={0.12} />
                     <Model ref={ref} />
                     <ContactShadows position={[0, -0.05, 0]} opacity={0.6} width={4} blur={2.5} far={1.5} />
-                    {/* <OrbitControls/> */}
+                    <OrbitControls />
                 </Suspense>
             </Canvas>
         </div>

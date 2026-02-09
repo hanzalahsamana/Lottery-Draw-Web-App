@@ -20,7 +20,7 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
 
   const drumInfo = useMemo(() => {
     if (!scene) return null;
-    const drumMesh = scene.getObjectByName("Glass_Mdl_01006");
+    const drumMesh = scene.getObjectByName("Glass_Bowl");
     const parent = drumMesh?.parent || scene;
     if (!drumMesh) return null;
 
@@ -310,7 +310,7 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
     if (!scene || !drumInfo || !drumAnchorRef.current) return;
     if (pipeCurveRef.current) return; // 🔒 build ONCE
 
-    const pipe = scene.getObjectByName("pipe");
+    const pipe = scene.getObjectByName("Pipe");
     if (!pipe || !pipe.geometry) return;
 
     pipe.updateWorldMatrix(true, false);
