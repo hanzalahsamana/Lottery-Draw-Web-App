@@ -13,7 +13,7 @@ const dummyData = [
 ];
 
 
-const DrawResults = ({ secondsLeft, draws, metadata }) => {
+const DrawResults = ({ secondsLeft, draws, isSelling, metadata }) => {
 
     return (
         <div className='bg-transparent w-full py-13.5 px-2.5 md:px-7.5 overflow-hidden'>
@@ -22,12 +22,26 @@ const DrawResults = ({ secondsLeft, draws, metadata }) => {
                     <div className="absolute -bottom-0.5 left-0 w-full h-0.5 bg-[#0b1220]"></div>
                     <div className="absolute left-1/2 -top-2.5 transform -translate-x-1/2 w-40 md:w-72 h-24 rounded-2xl bg-linear-to-r from-[#7c3aed] to-[#06b6d4] opacity-20 blur-xl z-10" />
                     <div className='flex items-center gap-2 absolute -bottom-7 flex-col z-10'>
-                        <p className='text-gray-300 text-[12px]/[12px] 2xl:text-[14px]/[14px] text-shadow-xs font-medium uppercase tracking-wide'>
-                            Next Draw In
-                        </p>
-                        <div className="countdown text-[40px]/[38px] 2xl:text-[45px]/[45px] font-extrabold tracking-[1px]">
-                            {formatDaysHoursMinutesSeconds(secondsLeft)}
-                        </div>
+                        {isSelling ? (
+                            <>
+                                <p className='text-gray-300 text-[12px]/[12px] 2xl:text-[14px]/[14px] text-shadow-xs font-medium uppercase tracking-wide'>
+                                    Next Draw In
+                                </p>
+                                <div className="countdown text-[40px]/[38px] 2xl:text-[45px]/[45px] font-extrabold tracking-[1px]">
+                                    {formatDaysHoursMinutesSeconds(secondsLeft)}
+                                </div>
+                            </>) : (
+                            <>
+                                <p className='text-gray-100 text-[30px]/[30px] 2xl:text-[30px]/[30px] text-shadow-xs font-black  tracking-wide'>
+                                    No Draws Ongoing
+                                </p>
+                                <p className='text-gray-300 text-[12px]/[12px] 2xl:text-[14px]/[14px] text-shadow-xs font-medium tracking-wide'>
+                                    Comeback later for the new draw results!
+                                </p>
+                            </>
+                        )
+                        }
+
                     </div>
 
                 </div>

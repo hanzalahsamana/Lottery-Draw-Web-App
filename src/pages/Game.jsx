@@ -21,6 +21,7 @@ const Game = () => {
     const [sellStartTime, setSellStartTime] = useState(null);
     const [isActive, setIsActive] = useState(false);
     const [revealedCount, setRevealedCount] = useState(0);
+    const [showResults, setShowResults] = useState(false);
 
     const triggeredRef = useRef(false);
     const revealIntervalRef = useRef(null);
@@ -91,7 +92,7 @@ const Game = () => {
     useEffect(() => {
         if (!firstFetchDone) return;
         // only trigger after first fetch and when secondsLeft hits 0
-        if (!lotteryLoading && secondsLeft === 0 && !triggeredRef.current) {
+        if (!lotteryLoading && secondsLeft === 0 && !triggeredRef.current && showResults) {
             triggeredRef.current = true;
             setIsActive(true);
             setRevealedCount(0);
@@ -135,7 +136,7 @@ const Game = () => {
         }
         setRevealedCount(0);
 
-        // triggerDraw(parsed)
+        triggerDraw(parsed)
 
         let idx = 0;
         revealIntervalRef.current = setInterval(() => {
@@ -201,7 +202,7 @@ const Game = () => {
                 gameMeta={gameInstance}
                 ref={lotteryRef}
             />
-            <button onClick={() => triggerDraw([1,2,3,4,5])} className='fixed bottom-20 right-20 z-10000000 bg-white px-2 py-1 font-semibold w-max rounded-md cursor-pointer hover:opacity-95' >Click me</button>
+            {/* <button onClick={() => triggerDraw([1, 2, 3, 4, 5])} className='fixed bottom-20 right-20 z-10000000 bg-white px-2 py-1 font-semibold w-max rounded-md cursor-pointer hover:opacity-95' >Click me</button> */}
 
 
             <DrawResults

@@ -475,6 +475,12 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
           const tGlobal = tStart + (1 - tStart) * t01;
           const curvePos = curve.getPoint(tGlobal);
           b.pos.copy(curvePos).add(pipeOffset);
+          console.log("🚀 ~ b:", b)
+          b.ang.y = 1;
+          b.ang.z = 1;
+          tempObj.quaternion.setFromEuler(b.ang);
+
+          // b.rotation.x += 0.1;
         }
 
         b.vel.set(0, 0, 0);

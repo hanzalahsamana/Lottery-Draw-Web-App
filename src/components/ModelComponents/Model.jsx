@@ -5,7 +5,7 @@ import SpinningBalls from "./SpinningBalls";
 import * as THREE from "three";
 import { useSharedModels } from "../../hooks/useSharedModels";
 
-const Model = forwardRef(({ playSequence = [] }, ref) => {
+const Model = forwardRef(({ playSequence = [], ballCount }, ref) => {
   const animationRef = useRef();
   const { machine, ball } = useSharedModels();
   const { scene, animations } = machine;
@@ -74,7 +74,7 @@ const Model = forwardRef(({ playSequence = [] }, ref) => {
       <FitAndPrepareModel gltfScene={scene} desiredSize={100} />
       <SpinningBalls
         ballScale={1}
-        count={51}
+        count={ballCount}
         scene={scene}
         ballScene={ball.scene}
         ballTexture={texture}

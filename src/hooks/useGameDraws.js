@@ -112,6 +112,16 @@ export default function useGameDraws(gameId) {
       await waitForProto();
 
       const metaDecoded = await fetchGameMeta(gameId);
+
+      const dummy = {
+        gameInstance: [
+          {
+            startSellingTime: '2026-02-11 07:15:00',
+            endSellingTime: '2026-02-11 07:23:00',
+            drawNo: '2c9f809f9953433d019955276c3e0003',
+          },
+        ],
+      };
       setGameMeta(metaDecoded);
 
       const initial = await fetchInitialDraws(gameId, 5);

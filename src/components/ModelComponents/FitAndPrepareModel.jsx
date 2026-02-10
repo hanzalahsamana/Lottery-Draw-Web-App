@@ -45,12 +45,12 @@ export const FitAndPrepareModel = ({ gltfScene, desiredSize = 40 }) => {
 
     // position camera to front face and look at the model center
 
-    const liftDown = 2.5; // increase this value to move it lower
+    const liftDown = -1.5; // increase this value to move it lower
     scene.position.y -= liftDown;
 
     const camY = size.y * 0.7;
     const camZ = Math.max(size.x, size.z) * 0.8 + 0.5;
-    camera.position.set(-camZ, camY -5, 0);
+    camera.position.set(-camZ, camY, 0);
     camera.lookAt(0, size.y * 0.60, 0);
     camera.updateProjectionMatrix();
 
