@@ -21,7 +21,7 @@ const ModelRenderer = forwardRef(({ secondsLeft }, ref) => {
             >
                 <Suspense fallback={null}>
                     <Environment preset="studio" background={false} intensity={1.0} />
-                    <directionalLight position={[5, 8, 5]} intensity={1.2} castShadow shadow-mapSize-width={2048} shadow-mapSize-height={2048} />
+                    <directionalLight position={[22, 30 , 88]}  intensity={1.2} castShadow shadow-mapSize-width={2048} shadow-mapSize-height={2048} />
                     <ambientLight intensity={0.12} />
                     <Model ref={ref} />
                     <ContactShadows position={[0, -0.05, 0]} opacity={0.6} width={4} blur={2.5} far={1.5} />

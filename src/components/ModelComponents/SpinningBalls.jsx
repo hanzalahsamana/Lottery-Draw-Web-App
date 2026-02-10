@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { PIPE_CENTER_POINTS } from "../../constants/constant";
 
 const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene, ballTexture, ballTextures }, ref) => {
   const instRef = useRef(null);
@@ -143,13 +144,6 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
     if (!Array.isArray(ballTextures) || ballTextures.length === 0) {
       console.warn("No ballTextures provided — fallback to single texture behavior.");
     }
-
-    console.log('>>> createInstances useEffect RUN', {
-      count, ballScale,
-      ballTexturesLength: (ballTextures || []).length,
-      drumInfoExists: !!drumInfo,
-      time: Date.now()
-    });
 
     // Reuse geometry but clone base material once
     const { geometry, material: baseMaterial } = extractSingleBallMesh(ballScene, null);
@@ -301,6 +295,11 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
   // --- NEW: build a pipe curve in ANCHOR-LOCAL space and compute tStart relative to hole ---
   const pipeCurveRef = useRef(null);
   const pipeTStartRef = useRef(0);
+  const exitedBallsRef = useRef([]); // store ball indices in exit order
+  const pipeExitRef = useRef(new THREE.Vector3()); // cached exit point
+  const stackDirRef = useRef(new THREE.Vector3()); // direction to stack backwards
+  const pipeOffset = new THREE.Vector3(-0.5, -0.25, -0.55); // same offset you used before
+
 
   // hole position as given by you on the mirror mesh (assumed local to the mirror/drum mesh)
   // We'll convert it to anchor-local to align with ball positions.
@@ -308,37 +307,75 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
 
   useEffect(() => {
     if (!scene || !drumInfo || !drumAnchorRef.current) return;
-    if (pipeCurveRef.current) return; // 🔒 build ONCE
+    if (pipeCurveRef.current) return;
 
     const pipe = scene.getObjectByName("Pipe");
     if (!pipe || !pipe.geometry) return;
 
-    pipe.updateWorldMatrix(true, false);
     const anchor = drumAnchorRef.current.anchor;
 
-    const posAttr = pipe.geometry.attributes.position;
-    const pts = [];
+    pipe.updateWorldMatrix(true, false);
 
-    for (let i = 0; i < posAttr.count / 2; i += 100) {
-      const p = new THREE.Vector3(
-        posAttr.getX(i),
-        posAttr.getY(i),
-        posAttr.getZ(i)
-      );
+    let geom = pipe.geometry.clone();
+    if (geom.index) geom = geom.toNonIndexed();
 
-      p.applyMatrix4(pipe.matrixWorld);
-      anchor.worldToLocal(p);
+    const pos = geom.attributes.position;
+    const v = new THREE.Vector3();
 
-      pts.push(p);
+    // 1️⃣ Find pipe main axis using bounding box
+    const bbox = new THREE.Box3().setFromObject(pipe);
+    const size = new THREE.Vector3();
+    bbox.getSize(size);
+
+    const axis =
+      size.x > size.y && size.x > size.z ? "x" :
+        size.y > size.z ? "y" : "z";
+
+    // 2️⃣ Slice vertices along axis
+    const slices = new Map();
+    const sliceSize = size[axis] / 10; // 👈 resolution (increase = smoother)
+
+    for (let i = 0; i < pos.count; i++) {
+      v.set(pos.getX(i), pos.getY(i), pos.getZ(i));
+      v.applyMatrix4(pipe.matrixWorld);
+      anchor.worldToLocal(v);
+
+      const key = Math.round(v[axis] / sliceSize);
+      if (!slices.has(key)) slices.set(key, []);
+      slices.get(key).push(v.clone());
     }
+
+    // 3️⃣ Average each slice
+    const pts = [];
+    for (const slice of slices.values()) {
+      const center = new THREE.Vector3();
+      slice.forEach(p => center.add(p));
+      center.divideScalar(slice.length);
+      pts.push(center);
+    }
+
+    // 4️⃣ Sort slices along pipe length
+    pts.sort((a, b) => a[axis] - b[axis]);
 
     if (pts.length < 4) return;
 
-    const curve = new THREE.CatmullRomCurve3(pts);
+    // 5️⃣ Build stable curve
+    const curve = new THREE.CatmullRomCurve3(PIPE_CENTER_POINTS);
     curve.curveType = "centripetal";
     curve.closed = false;
 
     pipeCurveRef.current = curve;
+
+    // 🔍 DEBUG – visualize centerline (NOW it will be perfect)
+    // console.log("🚀 ~ pts:", pts)
+    // PIPE_CENTER_POINTS.forEach(p => {
+    //   const s = new THREE.Mesh(
+    //     new THREE.SphereGeometry(0.02),
+    //     new THREE.MeshBasicMaterial({ color: "red" })
+    //   );
+    //   s.position.copy(p);
+    //   anchor.add(s);
+    // });
   }, [scene, drumInfo]);
 
   useFrame((_, dt) => {
@@ -351,7 +388,7 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
     const separationStrength = 100;
 
     const sequence = sequenceRef.current;
-    const animationTime = 3.0;
+    const animationTime = 6.0;
     const phaseADuration = animationTime * 0.25;
     const phaseBDuration = animationTime * 0.75;
     const zOffset = 0.209;
@@ -359,6 +396,9 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
     const seqIndex = seqIndexRef.current;
     const isDone = seqIndex >= sequence.length;
     const CONTROL_INDEX = isDone ? -1 : sequence[seqIndex];
+
+    // ensure exited balls queue exists
+    if (!exitedBallsRef.current) exitedBallsRef.current = [];
 
     if (lastSeqRef.current !== seqIndex && CONTROL_INDEX !== -1) {
       if (states[CONTROL_INDEX]) {
@@ -368,30 +408,46 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
       }
     }
 
-    const { meshes, instanceMap } = instData; // NEW: grab meshes + mapping
+    const { meshes, instanceMap } = instData;
+
+    // --- compute pipe exit & stack direction once per frame if available ---
+    const curve = pipeCurveRef.current;
+    if (curve) {
+      // exit point at t=1 (end of curve)
+      const exitPt = curve.getPoint(1).clone();
+      // apply same offset you used during phase B so visual alignment stays identical
+      exitPt.add(pipeOffset);
+      pipeExitRef.current.copy(exitPt);
+
+      // tangent at the end; stack direction is backwards along the pipe
+      const tangent = curve.getTangent(1).clone().normalize();
+      stackDirRef.current.copy(tangent.clone().negate());
+    }
 
     for (let i = 0; i < states.length; i++) {
       const b = states[i];
 
-      // ---------- handle finished sequence / final positions ----------
-      const finishedIndex = sequence.indexOf(i);
-      if (finishedIndex !== -1 && finishedIndex < seqIndex) {
-        const finalPos = finalPositionsRef.current[finishedIndex];
-        if (finalPos) {
-          b.pos.copy(finalPos);
-          b.vel.set(0, 0, 0);
-          tempObj.position.copy(b.pos);
-          tempObj.quaternion.identity();
-          tempObj.scale.set(ballScale, ballScale, ballScale);
-          tempObj.updateMatrix();
+      // ---------- if this ball has already exited (stacked) ---------- //
+      const exitIndex = exitedBallsRef.current.indexOf(i);
+      if (exitIndex !== -1) {
+        // compute spacing from ball radius (fallback small value if undefined)
+        const spacing = Math.max((b.radius || 0.12) * 2.05, 0.18);
+        const finalPos = pipeExitRef.current.clone().addScaledVector(stackDirRef.current, exitIndex * spacing);
 
-          const map = instanceMap[i];
-          if (map) meshes[map.meshIndex].setMatrixAt(map.localIndex, tempObj.matrix);
-          continue;
-        }
+        b.pos.copy(finalPos);
+        b.vel.set(0, 0, 0);
+        b.ang.set(0, 0, 0);
+        tempObj.position.copy(b.pos);
+        tempObj.quaternion.identity();
+        tempObj.scale.set(ballScale, ballScale, ballScale);
+        tempObj.updateMatrix();
+
+        const map = instanceMap[i];
+        if (map) meshes[map.meshIndex].setMatrixAt(map.localIndex, tempObj.matrix);
+        continue;
       }
 
-      // ---------- handle control index (active animated ball) ----------
+      // ---------- handle control index (active animated ball) ---------- //
       if (i === CONTROL_INDEX) {
         if (animStartRef.current === null) {
           animStartRef.current = performance.now();
@@ -406,12 +462,11 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
           const t = rawT * rawT * (3 - 2 * rawT); // smoothstep
 
           const anchor = drumAnchorRef.current.anchor;
-          const holeLocalOnMirror = new THREE.Vector3(-0.30, -1.12, -0.625);
+          const holeLocalOnMirror = new THREE.Vector3(-0.091, 0.0132, -4.0703);
           const holeWorld = holeLocalOnMirror.applyMatrix4(drumInfo.drumMesh.matrixWorld);
           anchor.worldToLocal(holeWorld);
           b.pos.lerpVectors(startPosRef.current, holeWorld, t);
         } else {
-          const curve = pipeCurveRef.current;
           const phaseElapsed = Math.min(elapsed - phaseADuration, phaseBDuration);
           const rawT = Math.min(phaseElapsed / phaseBDuration, 1);
           const t01 = rawT * rawT * (3 - 2 * rawT);
@@ -419,7 +474,7 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
           const tStart = pipeTStartRef.current || 0;
           const tGlobal = tStart + (1 - tStart) * t01;
           const curvePos = curve.getPoint(tGlobal);
-          b.pos.copy(curvePos).add(new THREE.Vector3(-0.5, -0.25, -0.55));
+          b.pos.copy(curvePos).add(pipeOffset);
         }
 
         b.vel.set(0, 0, 0);
@@ -432,27 +487,21 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
         const map = instanceMap[i];
         if (map) meshes[map.meshIndex].setMatrixAt(map.localIndex, tempObj.matrix);
 
+        // --- when animation finishes, register this ball into exited queue (stacking) --- //
         if (elapsed >= animationTime) {
           animStartRef.current = null;
           lastSeqRef.current = seqIndex + 1;
           seqIndexRef.current = seqIndex + 1;
 
-          const baseFinal = (() => {
-            const anchor = drumAnchorRef.current.anchor;
-            const fallback = new THREE.Vector3(-1.230, -2.148, -1.373).applyMatrix4(drumInfo.drumMesh.matrixWorld);
-            anchor.worldToLocal(fallback);
-            return fallback;
-          })();
+          // push this ball's index to exited queue
+          exitedBallsRef.current.push(i);
 
-          const offsetZ = zOffset * finalPositionsRef.current.length;
-          const finalPos = new THREE.Vector3(baseFinal.x + offsetZ, baseFinal.y, baseFinal.z);
-          finalPositionsRef.current.push(finalPos);
-
+          // If sequence is finished, reset (same behavior as before but now clear exited queue)
           if (seqIndexRef.current >= sequence.length) {
             seqIndexRef.current = 0;
             animStartRef.current = null;
             lastSeqRef.current = -1;
-            finalPositionsRef.current = [];
+            exitedBallsRef.current = [];
             sequenceRef.current = [];
           }
         }
@@ -460,7 +509,7 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
         continue;
       }
 
-      // ---------- normal physics for other balls ----------
+      // ---------- normal physics for other balls ---------- //
       const jitter = randomInsideUnitSphere().multiplyScalar(0.01 * dt);
       const radial = b.pos.clone().normalize();
       if (radial.lengthSq() === 0) radial.set(1, 0, 0);
@@ -508,7 +557,7 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
       tempObj.scale.set(ballScale, ballScale, ballScale);
       tempObj.updateMatrix();
 
-      // NEW: write to correct InstancedMesh/local index
+      // write to correct InstancedMesh/local index
       const map = instanceMap[i];
       if (map) meshes[map.meshIndex].setMatrixAt(map.localIndex, tempObj.matrix);
     }
@@ -516,6 +565,7 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
     // mark all meshes as updated
     meshes.forEach((m) => (m.instanceMatrix.needsUpdate = true));
   });
+
 
   return null;
 });

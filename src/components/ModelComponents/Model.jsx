@@ -17,7 +17,7 @@ const Model = forwardRef(({ playSequence = [] }, ref) => {
 
   const textures = useMemo(() => {
     const texArr = [];
-    for (let i = 1; i <= 50; i++) {
+    for (let i = 1; i <= 5; i++) {
       const no = i;
       const tex = new THREE.TextureLoader().load(`/Compelet_Machine_Model_Textures/Ball_Model_Textures/${no}.png`);
       tex.encoding = THREE.sRGBEncoding;
@@ -38,7 +38,7 @@ const Model = forwardRef(({ playSequence = [] }, ref) => {
     // 3. Override specific properties for the mirror effect
     // newMat.color.set(0xffffff);
     // newMat.metalness = isBackground ? 1 : 4; // Note: metalness max is usually 1
-    // newMat.opacity = isBackground ? 0.1 : 1;
+    // newMat.opacity = isBackground ? 0.1 : 0.1;
     // newMat.transparent = true; // Ensure transparency is on if opacity < 1
     // newMat.ior = 1;
     // newMat.roughness = 0; // Essential for a mirror effect
@@ -48,7 +48,6 @@ const Model = forwardRef(({ playSequence = [] }, ref) => {
 
 
   useEffect(() => {
-    console.log("🚀 ~ scene:", scene)
     if (!scene) return;
 
     // scene.traverse((node) => {
@@ -58,7 +57,6 @@ const Model = forwardRef(({ playSequence = [] }, ref) => {
     // });
     scene.traverse((node) => {
       if (node.isMesh && /^Ball_\d+$/.test(node.name)) {
-        console.log("🚀 ~ node:", node)
         // node.parent.remove(node);
         node.visible = false;
         // if (node.parent) node.parent.remove(node);

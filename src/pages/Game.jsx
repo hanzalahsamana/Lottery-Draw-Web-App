@@ -135,7 +135,7 @@ const Game = () => {
         }
         setRevealedCount(0);
 
-        triggerDraw(parsed)
+        // triggerDraw(parsed)
 
         let idx = 0;
         revealIntervalRef.current = setInterval(() => {
@@ -201,7 +201,7 @@ const Game = () => {
                 gameMeta={gameInstance}
                 ref={lotteryRef}
             />
-            {/* <button className='fixed bottom-20 right-20 z-10000000 bg-white px-2 py-1 font-semibold w-max rounded-md cursor-pointer hover:opacity-95' onClick={() => triggerDraw([2 - 1, 3 - 1, 4 - 1, 5 - 1, 6 - 1, 7 - 1])}>Click me</button> */}
+            <button onClick={() => triggerDraw([1,2,3,4,5])} className='fixed bottom-20 right-20 z-10000000 bg-white px-2 py-1 font-semibold w-max rounded-md cursor-pointer hover:opacity-95' >Click me</button>
 
 
             <DrawResults
