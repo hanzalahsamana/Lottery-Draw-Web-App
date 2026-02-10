@@ -64,7 +64,7 @@ const HeroSection = forwardRef(({ secondsLeft, isSelling, gameMeta }, ref) => {
                 </div>
             </div>
             {/* {isSelling && */}
-            <ModelRenderer secondsLeft={secondsLeft} ref={ref} ballCount={isSelling ? 51 : 0} />
+            <ModelRenderer secondsLeft={secondsLeft} ref={ref} ballCount={gameMeta?.drawNo ? 51 : 0} />
         </div >
     )
 })

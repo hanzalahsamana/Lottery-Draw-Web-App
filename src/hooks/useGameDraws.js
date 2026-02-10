@@ -116,8 +116,8 @@ export default function useGameDraws(gameId) {
       const dummy = {
         gameInstance: [
           {
-            startSellingTime: '2026-02-11 07:15:00',
-            endSellingTime: '2026-02-11 07:23:00',
+            startSellingTime: '2026-02-11 07:30:00',
+            endSellingTime: '2026-02-11 07:44:00',
             drawNo: '2c9f809f9953433d019955276c3e0003',
           },
         ],

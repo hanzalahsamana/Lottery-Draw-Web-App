@@ -92,7 +92,7 @@ const Game = () => {
     useEffect(() => {
         if (!firstFetchDone) return;
         // only trigger after first fetch and when secondsLeft hits 0
-        if (!lotteryLoading && secondsLeft === 0 && !triggeredRef.current && showResults) {
+        if (!lotteryLoading && secondsLeft === 0 && !triggeredRef.current && gameInstance?.drawNo) {
             triggeredRef.current = true;
             setIsActive(true);
             setRevealedCount(0);

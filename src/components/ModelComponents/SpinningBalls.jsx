@@ -388,7 +388,7 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
     const separationStrength = 100;
 
     const sequence = sequenceRef.current;
-    const animationTime = 6.0;
+    const animationTime = 3.0;
     const phaseADuration = animationTime * 0.25;
     const phaseBDuration = animationTime * 0.75;
     const zOffset = 0.209;
@@ -462,10 +462,10 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
           const t = rawT * rawT * (3 - 2 * rawT); // smoothstep
 
           const anchor = drumAnchorRef.current.anchor;
-          const holeLocalOnMirror = new THREE.Vector3(-0.091, 0.0132, -4.0703);
+          const holeLocalOnMirror = new THREE.Vector3(0, 0, 0);
           const holeWorld = holeLocalOnMirror.applyMatrix4(drumInfo.drumMesh.matrixWorld);
           anchor.worldToLocal(holeWorld);
-          b.pos.lerpVectors(startPosRef.current, holeWorld, t);
+          // b.pos.lerpVectors(startPosRef.current, holeWorld, t);
         } else {
           const phaseElapsed = Math.min(elapsed - phaseADuration, phaseBDuration);
           const rawT = Math.min(phaseElapsed / phaseBDuration, 1);
