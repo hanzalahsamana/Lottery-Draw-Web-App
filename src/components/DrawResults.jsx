@@ -13,7 +13,7 @@ const dummyData = [
 ];
 
 
-const DrawResults = ({ secondsLeft, draws, isSelling, metadata }) => {
+const DrawResults = ({ secondsLeft, draws, isSelling, openingDraw, metadata }) => {
 
     return (
         <div className='bg-transparent w-full py-13.5 px-2.5 md:px-7.5 overflow-hidden'>
@@ -30,7 +30,17 @@ const DrawResults = ({ secondsLeft, draws, isSelling, metadata }) => {
                                 <div className="countdown text-[40px]/[38px] 2xl:text-[45px]/[45px] font-extrabold tracking-[1px]">
                                     {formatDaysHoursMinutesSeconds(secondsLeft)}
                                 </div>
-                            </>) : (
+                            </>
+                        ) : openingDraw ? (
+                            <>
+                                <p className='text-gray-100 text-[30px]/[30px] 2xl:text-[30px]/[30px] text-shadow-xs font-black  tracking-wide'>
+                                    Draw Opening
+                                </p>
+                                <p className='text-gray-300 text-[12px]/[12px] 2xl:text-[14px]/[14px] text-shadow-xs font-medium tracking-wide'>
+                                    Currently draw is opening, stay tuned for the results!
+                                </p>
+                            </>
+                        ) : (
                             <>
                                 <p className='text-gray-100 text-[30px]/[30px] 2xl:text-[30px]/[30px] text-shadow-xs font-black  tracking-wide'>
                                     No Draws Ongoing
@@ -38,6 +48,7 @@ const DrawResults = ({ secondsLeft, draws, isSelling, metadata }) => {
                                 <p className='text-gray-300 text-[12px]/[12px] 2xl:text-[14px]/[14px] text-shadow-xs font-medium tracking-wide'>
                                     Comeback later for the new draw results!
                                 </p>
+
                             </>
                         )
                         }

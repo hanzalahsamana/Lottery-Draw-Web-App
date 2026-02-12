@@ -1,4 +1,4 @@
-export const MACHINE_URL = '/Compelet_Machine_Model_Textures/Machine_Model_Textures/Lottery_Simulator12.glb';
+export const MACHINE_URL = '/Compelet_Machine_Model_Textures/Machine_Model_Textures/Lottery_Simulator13.glb';
 export const BALL_URL = '/Compelet_Machine_Model_Textures/Ball_Model_Textures/Ball_Mdl_001.glb';
 
 export const MGPE_URL = import.meta.env.VITE_REACT_APP_MGPE;

@@ -25,7 +25,7 @@ const games = [
 
 const HeroSection = forwardRef(({ secondsLeft, isSelling, gameMeta }, ref) => {
     return (
-        <div className="md:h-[500px] 2xl:h-[600px] flex flex-col md:flex-row items-center md:items-center justify-between px-4 sm:px-6 py-6 md:py-0 gap-8 md:gap-0">
+        <div className="md:h-[500px] 2xl:h-[600px] flex flex-col md:flex-row items-center md:items-center justify-between px-4 sm:px-15 py-6 md:py-0 gap-8 md:gap-0">
             {/* Left column: headings and button */}
             <div className="z-20 flex flex-col gap-1 md:gap-0 2xl:gap-4 mt-10 mb-[-100px] md:mb-0 md:mt-6 w-full md:w-max">
                 <h1 className="font-bold animteUpDown text-[#FEB906] text-[30px] sm:text-[35px] md:text-[50px]/[70px] 2xl:text-[70px]/[70px]">
@@ -64,7 +64,7 @@ const HeroSection = forwardRef(({ secondsLeft, isSelling, gameMeta }, ref) => {
                 </div>
             </div>
             {/* {isSelling && */}
-            <ModelRenderer secondsLeft={secondsLeft} ref={ref} ballCount={gameMeta?.drawNo ? 51 : 0} />
+            <ModelRenderer secondsLeft={secondsLeft} ref={ref} ballCount={gameMeta?.drawNo ? 51 : 1} />
         </div >
     )
 })

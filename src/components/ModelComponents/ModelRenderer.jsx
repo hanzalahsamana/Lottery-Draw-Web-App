@@ -10,21 +10,23 @@ const ModelRenderer = forwardRef(({ secondsLeft, ballCount }, ref) => {
             <Canvas
                 shadows
                 dpr={[1, 2]}
-                camera={{ fov: 55 }}
-                onCreated={({ gl }) => {
-                    gl.outputEncoding = THREE.sRGBEncoding;
-                    gl.toneMapping = THREE.ACESFilmicToneMapping;
-                    gl.toneMappingExposure = 0.4;
+                camera={{ fov: 50, near: 0.01, far: 1000 }}
+                onCreated={({ gl, scene }) => {
+                    gl.outputEncoding = THREE.SRGBColorSpace;
+                    gl.toneMapping = THREE.LinearToneMapping;
+                    gl.toneMappingExposure = 1;
                     gl.physicallyCorrectLights = true;
+                    scene.fog = new THREE.Fog(0x000000, 0.10, 10000);
                 }}
                 style={{ width: "100%", height: "100%" }}
             >
                 <Suspense fallback={null}>
-                    <Environment preset="studio" background={false} intensity={1.0} />
-                    <directionalLight position={[22, 30, 88]} intensity={1.2} castShadow shadow-mapSize-width={2048} shadow-mapSize-height={2048} />
-                    <ambientLight intensity={0.12} />
+                    {/* <JPEGEnvironment url="/images/my-room.jpg" /> */}
+                    <Environment preset={'city'} environmentIntensity={2} background={false} intensity={1} />
+                    {/* <directionalLight position={[22, 30, 88]} intensity={1.2} castShadow shadow-mapSize-width={2048} shadow-mapSize-height={2048} /> */}
+                    <ambientLight intensity={1} />
                     <Model ref={ref} ballCount={ballCount} />
-                    <ContactShadows position={[0, -0.05, 0]} opacity={0.6} width={4} blur={2.5} far={1.5} />
+                    <ContactShadows position={[0, 0.05, 0]} opacity={1} width={40} blur={2.5} far={1.5} />
                     {/* <OrbitControls /> */}
                 </Suspense>
             </Canvas>

@@ -21,7 +21,7 @@ const Game = () => {
     const [sellStartTime, setSellStartTime] = useState(null);
     const [isActive, setIsActive] = useState(false);
     const [revealedCount, setRevealedCount] = useState(0);
-    const [showResults, setShowResults] = useState(false);
+    const [openingDraw, setOpeningDraw] = useState(false);
 
     const triggeredRef = useRef(false);
     const revealIntervalRef = useRef(null);
@@ -53,7 +53,7 @@ const Game = () => {
         if (!startTimeStr || !endTimeStr) return;
 
         const startTime = new Date(gmt8ToLocal(startTimeStr));
-        const endTime = new Date(new Date(gmt8ToLocal(endTimeStr)).getTime() + 60 * 1 * 1000);
+        const endTime = new Date(new Date(gmt8ToLocal(endTimeStr)).getTime() + 60 * 1.5 * 1000);
 
         setSellStartTime(startTime);
 
@@ -96,6 +96,7 @@ const Game = () => {
             triggeredRef.current = true;
             setIsActive(true);
             setRevealedCount(0);
+            setOpeningDraw(true);
 
             // fetch fresh data
             init(false);
@@ -104,6 +105,7 @@ const Game = () => {
             if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
             hideTimeoutRef.current = setTimeout(() => {
                 setIsActive(false);
+                setOpeningDraw(false);
                 triggeredRef.current = false;
                 setRevealedCount(0);
             }, 20000);
@@ -157,6 +159,7 @@ const Game = () => {
                 if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
                 hideTimeoutRef.current = setTimeout(() => {
                     setIsActive(false);
+                    setOpeningDraw(false);
                     triggeredRef.current = false;
                     setRevealedCount(0);
                 }, 2000);
@@ -188,12 +191,12 @@ const Game = () => {
     }
 
     if (loading) {
-        return <WebLoader />;
+        return <WebLoader  />;
     }
 
     return (
         <>
-            <div className="fixed w-200 h-50 top-1/2 -translate-y-1/2 -right-25 blur-[180px] rounded-full bg-[#c70be479]"></div>
+            <div className="fixed w-120 h-80 top-1/2 -translate-y-1/2 -right-8 blur-[180px] rounded-full bg-[#ffffff7d]"></div>
 
             <HeroSection
                 secondsLeft={secondsLeft}
@@ -202,7 +205,7 @@ const Game = () => {
                 gameMeta={gameInstance}
                 ref={lotteryRef}
             />
-            {/* <button onClick={() => triggerDraw([1, 2, 3, 4, 5])} className='fixed bottom-20 right-20 z-10000000 bg-white px-2 py-1 font-semibold w-max rounded-md cursor-pointer hover:opacity-95' >Click me</button> */}
+            {/* <button onClick={() => triggerDraw([1, 2, 3, 4, 5, 6])} className='fixed bottom-20 right-20 z-10000000 bg-white px-2 py-1 font-semibold w-max rounded-md cursor-pointer hover:opacity-95' >Click me</button> */}
 
 
             <DrawResults
@@ -210,6 +213,7 @@ const Game = () => {
                 draws={lastDraws}
                 metadata={gameMeta}
                 isSelling={isSelling}
+                openingDraw={openingDraw}
             />
 
 

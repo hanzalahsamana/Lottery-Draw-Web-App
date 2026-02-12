@@ -7,6 +7,9 @@ import { useSharedModels } from "../../hooks/useSharedModels";
 
 const Model = forwardRef(({ playSequence = [], ballCount }, ref) => {
   const animationRef = useRef();
+  const modelRef = useRef(); // for mouse tilt
+  const mouse = useRef({ x: 0, y: 0 });
+
   const { machine, ball } = useSharedModels();
   const { scene, animations } = machine;
   const { actions } = useAnimations(animations, animationRef);
@@ -17,9 +20,8 @@ const Model = forwardRef(({ playSequence = [], ballCount }, ref) => {
 
   const textures = useMemo(() => {
     const texArr = [];
-    for (let i = 1; i <= 5; i++) {
-      const no = i;
-      const tex = new THREE.TextureLoader().load(`/Compelet_Machine_Model_Textures/Ball_Model_Textures/${no}.png`);
+    for (let i = 1; i <= 30; i++) {
+      const tex = new THREE.TextureLoader().load(`/Compelet_Machine_Model_Textures/Ball_Model_Textures/${i}.png`);
       tex.encoding = THREE.sRGBEncoding;
       tex.anisotropy = 100;
       texArr.push(tex);
@@ -27,41 +29,59 @@ const Model = forwardRef(({ playSequence = [], ballCount }, ref) => {
     return texArr;
   }, []);
 
+  const fakeEnv = new THREE.TextureLoader().load('/environment.jpeg');
+  fakeEnv.mapping = THREE.EquirectangularReflectionMapping;
 
-  const getMirrorMaterial = (oldMat, isBackground) => {
-    // 1. Create the new material
+  const getMirrorMaterial = (oldMat) => {
     const newMat = new THREE.MeshPhysicalMaterial();
-
-    // 2. Copy properties from the old material safely
     newMat.copy(oldMat);
-
-    // 3. Override specific properties for the mirror effect
-    // newMat.color.set(0xffffff);
-    // newMat.metalness = isBackground ? 1 : 4; // Note: metalness max is usually 1
-    // newMat.opacity = isBackground ? 0.1 : 0.1;
-    // newMat.transparent = true; // Ensure transparency is on if opacity < 1
-    // newMat.ior = 1;
-    // newMat.roughness = 0; // Essential for a mirror effect
-
+    newMat.roughness = 1.5;
     return newMat;
   };
 
+  // Mouse tracking
+  useEffect(() => {
+    const handleMouse = (e) => {
+      const { innerWidth, innerHeight } = window;
+      mouse.current.x = (e.clientX / innerWidth) * 2 - 1; // -1 to 1
+      mouse.current.y = (e.clientY / innerHeight) * 2 - 1; // -1 to 1
+    };
+    window.addEventListener("mousemove", handleMouse);
+    return () => window.removeEventListener("mousemove", handleMouse);
+  }, []);
+
+  // Apply tilt every frame
+  useEffect(() => {
+    if (!modelRef.current) return;
+    const tick = () => {
+      if (!modelRef.current) return;
+
+      const targetRotY = mouse.current.x * 0.3;
+
+      modelRef.current.rotation.y = THREE.MathUtils.lerp(modelRef.current.rotation.y, targetRotY, 0.05);
+      modelRef.current.position.x = THREE.MathUtils.lerp(modelRef.current.position.x, mouse.current.x * 0.25, 0.05);
+
+
+      const targetRotX = mouse.current.y * 0.25;
+
+      modelRef.current.rotation.z = THREE.MathUtils.lerp(modelRef.current.rotation.z, targetRotX, 0.05);
+      modelRef.current.position.x = THREE.MathUtils.lerp(modelRef.current.position.x, mouse.current.y * 0.2, 0.05);
+
+
+      requestAnimationFrame(tick);
+    };
+    tick();
+  }, []);
 
   useEffect(() => {
     if (!scene) return;
 
-    // scene.traverse((node) => {
-    //   if (node.isMesh && (node.name === "pipe" || node.name === "Glass_Bowl" || node.name === "Glass_Mdl_01")) {
-    //     node.material = getMirrorMaterial(node.material, node.name === "pipe");
-    //   }
-    // });
     scene.traverse((node) => {
-      if (node.isMesh && /^Ball_\d+$/.test(node.name)) {
-        // node.parent.remove(node);
-        node.visible = false;
-        // if (node.parent) node.parent.remove(node);
+      if (node.isMesh && node.name === "Line001") {
+        node.material = getMirrorMaterial(node.material);
       }
     });
+
     const animNames = Object.keys(actions || {});
     if (animNames.length && playSequence.length === 0) {
       actions[animNames[0]]?.reset()?.play();
@@ -70,17 +90,19 @@ const Model = forwardRef(({ playSequence = [], ballCount }, ref) => {
 
   return (
     <group ref={animationRef} dispose={null}>
-      <primitive object={scene} />
-      <FitAndPrepareModel gltfScene={scene} desiredSize={100} />
-      <SpinningBalls
-        ballScale={1}
-        count={ballCount}
-        scene={scene}
-        ballScene={ball.scene}
-        ballTexture={texture}
-        ballTextures={textures}
-        ref={ref}
-      />
+      <group ref={modelRef}>
+        <primitive object={scene} />
+        <FitAndPrepareModel gltfScene={scene} />
+        <SpinningBalls
+          ballScale={1}
+          count={ballCount}
+          scene={scene}
+          ballScene={ball.scene}
+          ballTexture={texture}
+          ballTextures={textures}
+          ref={ref}
+        />
+      </group>
     </group>
   );
 });
