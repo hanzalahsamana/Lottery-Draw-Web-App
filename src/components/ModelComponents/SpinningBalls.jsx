@@ -570,8 +570,8 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
         b.vel.reflect(normal);
       }
 
-      const yLimit = Math.max(0.00001, yHalfLocal - b.radius);
-      b.pos.y = THREE.MathUtils.clamp(b.pos.y, -yLimit, yLimit);
+      // const yLimit = Math.max(0.00001, yHalfLocal - b.radius);
+      // b.pos.y = THREE.MathUtils.clamp(b.pos.y, -yLimit, yLimit);
 
       b.vel.multiplyScalar(0.1);
 

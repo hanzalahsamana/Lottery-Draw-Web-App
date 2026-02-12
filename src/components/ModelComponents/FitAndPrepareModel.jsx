@@ -15,7 +15,7 @@ export const FitAndPrepareModel = ({ gltfScene }) => {
     const liftDown = 2.4; // increase this value to move it lower
     scene.position.y -= liftDown;
 
-    camera.position.set(-6.55, 0.395, 0.300);
+    camera.position.set(-7.55, 0.395, 0.300);
     // camera.rotation.set(7, 87, 7);
     camera.lookAt(1, 0, 0);
     camera.updateProjectionMatrix();

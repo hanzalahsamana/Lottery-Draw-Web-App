@@ -6,7 +6,7 @@ import Model from "./Model";
 
 const ModelRenderer = forwardRef(({ secondsLeft, ballCount }, ref) => {
     return (
-        <div className={`w-[300px] h-[500px] md:w-[400px] md:h-[600px] 2xl:h-[700px] md:-mt-[50px] relative flex items-start justify-start transition-all duration-[1.5s] z-1000 origin-[90%_60%] `}>
+        <div className={`w-[300px] h-[500px] md:w-[400px] md:h-[700px] 2xl:h-[700px] md:-mt-[50px] overflow-visible relative flex items-start justify-start transition-all duration-[1.5s] z-1000 `}>
             <Canvas
                 shadows
                 dpr={[1, 2]}
