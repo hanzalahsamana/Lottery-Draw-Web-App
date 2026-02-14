@@ -3,7 +3,20 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { PIPE_CENTER_POINTS } from "../../constants/constant";
 
-const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene, ballTexture, ballTextures }, ref) => {
+const SpinningBalls = forwardRef(({
+  scene,
+  count = 25,
+  ballScale = 1,
+  ballScene,
+  ballTexture,
+  ballTextures,
+  // new tunable props:
+  speed = 1.5,                 // global speed multiplier (>1 faster, <1 slower)
+  animationTimeProp = 5.0,     // base animation time for active ball (seconds)
+  damping = 0.98,              // per-frame velocity damping (0.98 keeps velocity, 0.9 more drag)
+  jitterScale = 0.01,          // random jitter magnitude
+  initialVelBase = 0.3,        // base initial velocity multiplier
+}, ref) => {
   const instRef = useRef(null);
   const ballsStateRef = useRef([]);
   const drumAnchorRef = useRef(null);
@@ -173,7 +186,6 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
         mat.needsUpdate = true;
         if (mat.map) {
           mat.map.encoding = THREE.sRGBEncoding;
-          // optional: mat.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
         }
       }
       mat.side = THREE.FrontSide;
@@ -214,7 +226,9 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
       parent.worldToLocal(ballLocalParent);
       const posLocal = ballLocalParent.clone().sub(centerLocal);
 
-      const velWorld = randomInsideUnitSphere().multiplyScalar(0.3 + Math.random() * 0.3);
+      // ===== initial velocity scaled by global speed =====
+      const initialVelScale = (initialVelBase + Math.random() * initialVelBase) * speed;
+      const velWorld = randomInsideUnitSphere().multiplyScalar(initialVelScale);
       const velWorldPoint = drumCenterWorld.clone().add(velWorld);
       const velLocalPoint = velWorldPoint.clone();
       parent.worldToLocal(velLocalPoint);
@@ -222,9 +236,9 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
 
       const ang = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
       const angVel = new THREE.Vector3(
-        (Math.random() - 0.5) * 2.0,
-        (Math.random() - 0.5) * 2.0,
-        (Math.random() - 0.5) * 2.0
+        (Math.random() - 0.5) * 2.0 * speed,
+        (Math.random() - 0.5) * 2.0 * speed,
+        (Math.random() - 0.5) * 2.0 * speed
       );
 
       let baseRadius = 0.5;
@@ -263,10 +277,8 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
       instanceMap[i] = { meshIndex: meshIdx, localIndex };
     }
 
-    // mark all instance matrices updated
     meshes.forEach((m) => (m.instanceMatrix.needsUpdate = true));
 
-    // store in refs for useFrame
     instRef.current = { meshes, instanceMap, geometry, baseMaterial };
 
     ballsStateRef.current = states;
@@ -290,9 +302,8 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
       instRef.current = null;
       ballsStateRef.current = [];
     };
-  }, [ballScene, drumInfo, count, ballScale, ballTextures]);
+  }, [ballScene, drumInfo, count, ballScale, ballTextures, speed, initialVelBase]);
 
-  // --- NEW: build a pipe curve in ANCHOR-LOCAL space and compute tStart relative to hole ---
   const pipeCurveRef = useRef(null);
   const pipeTStartRef = useRef(0);
   const exitedBallsRef = useRef([]); // store ball indices in exit order
@@ -300,10 +311,6 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
   const stackDirRef = useRef(new THREE.Vector3()); // direction to stack backwards
   const pipeOffset = new THREE.Vector3(-0.5, -0.25, -0.55); // same offset you used before
   const resetTimeoutRef = useRef(null);
-
-  // hole position as given by you on the mirror mesh (assumed local to the mirror/drum mesh)
-  // We'll convert it to anchor-local to align with ball positions.
-  const HOLE_LOCAL_ON_MIRROR = new THREE.Vector3(-0.60, -1.12, -0.625);
 
   useEffect(() => {
     return () => {
@@ -328,7 +335,6 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
     const pos = geom.attributes.position;
     const v = new THREE.Vector3();
 
-    // 1️⃣ Find pipe main axis using bounding box
     const bbox = new THREE.Box3().setFromObject(pipe);
     const size = new THREE.Vector3();
     bbox.getSize(size);
@@ -337,7 +343,6 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
       size.x > size.y && size.x > size.z ? "x" :
         size.y > size.z ? "y" : "z";
 
-    // 2️⃣ Slice vertices along axis
     const slices = new Map();
     const sliceSize = size[axis] / 10; // 👈 resolution (increase = smoother)
 
@@ -351,37 +356,12 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
       slices.get(key).push(v.clone());
     }
 
-    // 3️⃣ Average each slice
-    const pts = [];
-    for (const slice of slices.values()) {
-      const center = new THREE.Vector3();
-      slice.forEach(p => center.add(p));
-      center.divideScalar(slice.length);
-      pts.push(center);
-    }
-
-    // 4️⃣ Sort slices along pipe length
-    pts.sort((a, b) => a[axis] - b[axis]);
-
-    if (pts.length < 4) return;
-
-    // 5️⃣ Build stable curve
     const curve = new THREE.CatmullRomCurve3(PIPE_CENTER_POINTS);
     curve.curveType = "centripetal";
     curve.closed = false;
 
     pipeCurveRef.current = curve;
 
-    // 🔍 DEBUG – visualize centerline (NOW it will be perfect)
-    // console.log("🚀 ~ pts:", pts)
-    // PIPE_CENTER_POINTS.forEach(p => {
-    //   const s = new THREE.Mesh(
-    //     new THREE.SphereGeometry(0.02),
-    //     new THREE.MeshBasicMaterial({ color: "red" })
-    //   );
-    //   s.position.copy(p);
-    //   anchor.add(s);
-    // });
   }, [scene, drumInfo]);
 
   useFrame((_, dt) => {
@@ -391,10 +371,12 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
 
     const { radiusLocal, yHalfLocal } = drumInfo;
     const safetyRadius = radiusLocal * 0.1;
-    const separationStrength = 100;
+    // separation strength scaled by speed
+    const separationStrength = 100 * speed;
 
     const sequence = sequenceRef.current;
-    const animationTime = 3.0;
+    // animationTime is shorter when speed > 1 (faster)
+    const animationTime = Math.max(0.05, animationTimeProp / speed);
     const phaseADuration = animationTime * 0.25;
     const phaseBDuration = animationTime * 0.75;
     const zOffset = 0.209;
@@ -416,16 +398,13 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
 
     const { meshes, instanceMap } = instData;
 
-    // --- compute pipe exit & stack direction once per frame if available ---
+    // --- compute pipe exit & stack direction once per frame if available --- //
     const curve = pipeCurveRef.current;
     if (curve) {
-      // exit point at t=1 (end of curve)
       const exitPt = curve.getPoint(1).clone();
-      // apply same offset you used during phase B so visual alignment stays identical
       exitPt.add(pipeOffset);
       pipeExitRef.current.copy(exitPt);
 
-      // tangent at the end; stack direction is backwards along the pipe
       const tangent = curve.getTangent(1).clone().normalize();
       stackDirRef.current.copy(tangent.clone().negate());
     }
@@ -436,7 +415,6 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
       // ---------- if this ball has already exited (stacked) ---------- //
       const exitIndex = exitedBallsRef.current.indexOf(i);
       if (exitIndex !== -1) {
-        // compute spacing from ball radius (fallback small value if undefined)
         const spacing = Math.max((b.radius || 0.12) * 2, 0.10);
         const finalPos = pipeExitRef.current.clone().addScaledVector(stackDirRef.current, exitIndex * spacing);
 
@@ -483,8 +461,7 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
           const alreadyExited = exitedBallsRef.current.length;
           const spacing = Math.max((b.radius || 0.12) * 2.05, 0.18);
 
-          // how much pipe length each ball should use
-          const pipeLengthPortion = 0.024; // 👈 adjust this
+          const pipeLengthPortion = 0.024;
           const maxT = 1 - (alreadyExited * pipeLengthPortion);
 
           const tStart = pipeTStartRef.current || 0;
@@ -495,8 +472,6 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
           b.ang.y = 1;
           b.ang.z = 1;
           tempObj.quaternion.setFromEuler(b.ang);
-
-          // b.rotation.x += 0.1;
         }
 
         b.vel.set(0, 0, 0);
@@ -509,16 +484,13 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
         const map = instanceMap[i];
         if (map) meshes[map.meshIndex].setMatrixAt(map.localIndex, tempObj.matrix);
 
-        // --- when animation finishes, register this ball into exited queue (stacking) --- //
         if (elapsed >= animationTime) {
           animStartRef.current = null;
           lastSeqRef.current = seqIndex + 1;
           seqIndexRef.current = seqIndex + 1;
 
-          // push this ball's index to exited queue
           exitedBallsRef.current.push(i);
 
-          // If sequence is finished, reset (same behavior as before but now clear exited queue)
           if (seqIndexRef.current >= sequence.length) {
             if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
 
@@ -529,7 +501,7 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
               exitedBallsRef.current = [];
               sequenceRef.current = [];
               resetTimeoutRef.current = null;
-            }, 2000); // 1000ms = 1 second
+            }, 2000);
           }
         }
 
@@ -537,7 +509,7 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
       }
 
       // ---------- normal physics for other balls ---------- //
-      const jitter = randomInsideUnitSphere().multiplyScalar(0.01 * dt);
+      const jitter = randomInsideUnitSphere().multiplyScalar(jitterScale * dt * speed);
       const radial = b.pos.clone().normalize();
       if (radial.lengthSq() === 0) radial.set(1, 0, 0);
       const tangentialJitter = jitter.sub(radial.multiplyScalar(jitter.dot(radial)));
@@ -554,13 +526,14 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
           const dist = Math.sqrt(distSq) || 0.0001;
           diff.normalize();
           const overlap = minDist - dist;
-          const push = diff.multiplyScalar(overlap * separationStrength * 0.05);
+          const push = diff.multiplyScalar(overlap * separationStrength * 0.05 * dt * speed);
           b.vel.add(push);
           b2.vel.sub(push);
         }
       }
 
-      b.pos.addScaledVector(b.vel, dt);
+      // update position: multiply by speed to make balls move faster
+      b.pos.addScaledVector(b.vel, dt * speed);
 
       const maxDist = safetyRadius - b.radius;
       const distFromCenter = b.pos.length();
@@ -570,14 +543,12 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
         b.vel.reflect(normal);
       }
 
-      // const yLimit = Math.max(0.00001, yHalfLocal - b.radius);
-      // b.pos.y = THREE.MathUtils.clamp(b.pos.y, -yLimit, yLimit);
+      // apply damping (should be close to 1.0 to preserve speed)
+      b.vel.multiplyScalar(damping);
 
-      b.vel.multiplyScalar(0.1);
-
-      b.ang.x += b.angVel.x * dt;
-      b.ang.y += b.angVel.y * dt;
-      b.ang.z += b.angVel.z * dt;
+      b.ang.x += b.angVel.x * dt * speed;
+      b.ang.y += b.angVel.y * dt * speed;
+      b.ang.z += b.angVel.z * dt * speed;
 
       tempObj.position.copy(b.pos);
       tempObj.quaternion.setFromEuler(b.ang);
@@ -591,7 +562,6 @@ const SpinningBalls = forwardRef(({ scene, count = 25, ballScale = 1, ballScene,
     // mark all meshes as updated
     meshes.forEach((m) => (m.instanceMatrix.needsUpdate = true));
   });
-
 
   return null;
 });

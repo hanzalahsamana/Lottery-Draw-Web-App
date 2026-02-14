@@ -53,7 +53,7 @@ const Game = () => {
         if (!startTimeStr || !endTimeStr) return;
 
         const startTime = new Date(gmt8ToLocal(startTimeStr));
-        const endTime = new Date(new Date(gmt8ToLocal(endTimeStr)).getTime() + 60 * 1.5 * 1000);
+        const endTime = new Date(new Date(gmt8ToLocal(endTimeStr)).getTime() +60 * 1.5 * 1000);
 
         setSellStartTime(startTime);
 
@@ -203,6 +203,7 @@ const Game = () => {
                 isSelling={isSelling}
                 sellStartTime={sellStartTime}
                 gameMeta={gameInstance}
+                openingDraw={openingDraw}
                 ref={lotteryRef}
             />
             {/* <button onClick={() => triggerDraw([1, 2, 3, 4, 5, 6])} className='fixed bottom-20 right-20 z-10000000 bg-white px-2 py-1 font-semibold w-max rounded-md cursor-pointer hover:opacity-95' >Click me</button> */}
@@ -226,7 +227,7 @@ const Game = () => {
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: -30, opacity: 0 }}
                         transition={{ duration: 0.30, ease: "easeOut" }}
-                        className="fixed flex flex-col px-4 items-center justify-evenly rounded-lg top-8 left-1/2 -translate-x-1/2 w-[300px] h-[50px] bg-[#0b1220]"
+                        className="fixed flex z-1000 flex-col px-4 items-center justify-evenly rounded-lg top-8 left-1/2 -translate-x-1/2 w-[300px] h-[50px]  bg-gray-800"
                     >
                         <div className="absolute w-[1px] h-[30px] -top-[30px] left-4 bg-gray-700" />
                         <div className="absolute w-[4px] h-[4px] top-[10px] left-[14px] bg-gray-700 rounded-full" />
@@ -249,7 +250,7 @@ const Game = () => {
                                     <>
                                         <div className='flex items-center justify-center gap-2'>
                                             {numbers.map((num, i) => (
-                                                <div key={i} className="w-[30px] h-[30px] flex items-center  justify-center rounded-full bg-gray-800">
+                                                <div key={i} className="w-[30px] h-[30px] flex items-center  justify-center rounded-full bg-gray-600 ">
                                                     {i < revealedCount ? (
                                                         <BilliardBall ballNo={num} className={'scale-[1] origin-enter'} />
                                                     ) : null}

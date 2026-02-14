@@ -56,11 +56,11 @@ const Model = forwardRef(({ playSequence = [], ballCount }, ref) => {
     const tick = () => {
       if (!modelRef.current) return;
 
-      const targetRotY = mouse.current.x * 0.25;
-      const targetPosY = mouse.current.x * 0.25;
+      const targetRotY = mouse.current.x * 0.20;
+      const targetPosY = mouse.current.x * 0.20;
 
-      const targetRotX = mouse.current.y * 0.25;
-      const targetPosX = mouse.current.y * 0.25;
+      const targetRotX = mouse.current.y * 0.20;
+      const targetPosX = mouse.current.y * 0.20;
 
 
       modelRef.current.rotation.y = THREE.MathUtils.lerp(modelRef.current.rotation.y, targetRotY, 0.05);

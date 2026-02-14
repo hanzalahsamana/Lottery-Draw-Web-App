@@ -4,9 +4,9 @@ import { forwardRef, Suspense } from "react";
 import * as THREE from "three";
 import Model from "./Model";
 
-const ModelRenderer = forwardRef(({ secondsLeft, ballCount }, ref) => {
+const ModelRenderer = forwardRef(({ secondsLeft, ballCount, openingDraw }, ref) => {
     return (
-        <div className={`w-[300px] h-[500px] md:w-[400px] md:h-[700px] 2xl:h-[700px] md:-mt-[50px] overflow-visible relative flex items-start justify-start transition-all duration-[1.5s] z-1000 `}>
+        <div className={`w-[300px] h-[500px] md:w-[400px] md:h-[700px] 2xl:h-[700px] overflow-visible ${openingDraw ? 'scale-120 fixed origin-top top-0 left-1/2 -translate-x-1/2 md:-mt-[50px] ' : 'relative scale-100 translate-0 md:-mt-[50px] '}  flex items-start justify-start transition-all duration-[1s] z-1000 `}>
             <Canvas
                 shadows
                 dpr={[1, 2]}
