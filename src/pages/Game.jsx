@@ -53,7 +53,7 @@ const Game = () => {
         if (!startTimeStr || !endTimeStr) return;
 
         const startTime = new Date(gmt8ToLocal(startTimeStr));
-        const endTime = new Date(new Date(gmt8ToLocal(endTimeStr)).getTime() +60 * 1.5 * 1000);
+        const endTime = new Date(new Date(gmt8ToLocal(endTimeStr)).getTime() + 60 * 1.5 * 1000);
 
         setSellStartTime(startTime);
 
@@ -191,7 +191,7 @@ const Game = () => {
     }
 
     if (loading) {
-        return <WebLoader  />;
+        return <WebLoader />;
     }
 
     return (

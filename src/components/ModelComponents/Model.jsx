@@ -95,7 +95,7 @@ const Model = forwardRef(({ playSequence = [], ballCount }, ref) => {
         <primitive object={scene} />
         <FitAndPrepareModel gltfScene={scene} />
         <SpinningBalls
-          ballScale={1}
+          ballScale={0.95}
           count={ballCount}
           scene={scene}
           ballScene={ball.scene}

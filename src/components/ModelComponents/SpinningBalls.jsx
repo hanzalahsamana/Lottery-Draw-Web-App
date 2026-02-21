@@ -51,7 +51,7 @@ const SpinningBalls = forwardRef(({
     const drumRadiusWorld = Math.min(drumSizeWorld.x, drumSizeWorld.y, drumSizeWorld.z) * 0.58;
 
     const centerLocal = drumCenterWorld.clone();
-    const centerOffset = new THREE.Vector3(0.35, 0, 0);
+    const centerOffset = new THREE.Vector3(0, 0, 0);
     centerLocal.add(centerOffset);
     parent.worldToLocal(centerLocal);
 
