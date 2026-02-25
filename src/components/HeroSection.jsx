@@ -24,17 +24,17 @@ const games = [
 ]
 
 const HeroSection = forwardRef(({ secondsLeft, isSelling, gameMeta, openingDraw }, ref) => {
-useEffect(() => {
-    if (openingDraw) {
-        document.body.style.overflow = 'hidden';
-    } else {
-        document.body.style.overflow = 'auto';
-    }
+    useEffect(() => {
+        if (openingDraw) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
 
-    return () => {
-        document.body.style.overflow = 'auto'; // cleanup
-    };
-}, [openingDraw]);
+        return () => {
+            document.body.style.overflow = 'auto'; // cleanup
+        };
+    }, [openingDraw]);
 
 
     return (
@@ -51,7 +51,8 @@ useEffect(() => {
                 {isSelling &&
                     <button className="bg-linear-to-b w-full md:w-max animteUpDown from-[#3c049d] to-[#2b0370] text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-md text-sm 2xl:text-base mt-4">
                         Winnig For #{gameMeta?.drawNo}
-                    </button>}
+                    </button>
+                }
 
                 {/* Browse more games */}
                 <div className="hidden md:flex animteUpDown flex-col items-start gap-3 mt-6 w-full">
@@ -80,7 +81,7 @@ useEffect(() => {
 
             <div className={`${openingDraw ? 'opacity-80' : 'opacity-0'} transition-all duration-500 bg-black pointer-events-none w-screen h-screen fixed top-0 left-0 z-100`}></div>
 
-            <ModelRenderer secondsLeft={secondsLeft} ref={ref} ballCount={gameMeta?.drawNo ?51 : 0} openingDraw={openingDraw} />
+            <ModelRenderer secondsLeft={secondsLeft} ref={ref} ballCount={gameMeta?.drawNo ? 51 : 0} openingDraw={openingDraw} />
         </div >
     )
 })

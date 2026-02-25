@@ -31,12 +31,12 @@
 
 .billiard-ball {
     --_color-yellow: #F5D010;
-    --_color-blue: hsl(216, 100%, 58%);
+    --_color-blue: #98CFFF;
     --_color-red: hsl(0 100% 50%);
     --_color-pink: hsl(325 100% 50%);
     --_color-purple: hsl(259, 87%, 65%);
-    --_color-orange: hsl(17 100% 47%);
-    --_color-green: hsl(125, 47%, 54%);
+    --_color-orange: #eac614;
+    --_color-green: #94E140;
     --_color-brown: hsl(10 100% 25%);
     --_color-black: hsl(0 0% 5%);
     --_color-white: hsl(0 0% 95%);

@@ -36,6 +36,7 @@ const Model = forwardRef(({ playSequence = [], ballCount }, ref) => {
     const newMat = new THREE.MeshPhysicalMaterial();
     newMat.copy(oldMat);
     newMat.roughness = 1.5;
+    newMat.opacity = 1;
     return newMat;
   };
 
@@ -81,6 +82,15 @@ const Model = forwardRef(({ playSequence = [], ballCount }, ref) => {
       if (node.isMesh && node.name === "Line001") {
         node.material = getMirrorMaterial(node.material);
       }
+      // if (node.isMesh && node.name === "Line001001") {
+      //   const newMat = new THREE.MeshPhysicalMaterial();
+      //   newMat.copy(node.material);
+      //   newMat.roughness = 1.5;
+      //   newMat.opacity = 1;
+      //   newMat.metalness =2
+
+      //   node.material = newMat;
+      // }
     });
 
     const animNames = Object.keys(actions || {});

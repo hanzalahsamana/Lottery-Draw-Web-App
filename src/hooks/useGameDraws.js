@@ -123,9 +123,11 @@ export default function useGameDraws(gameId) {
         ],
       };
       setGameMeta(metaDecoded);
+      console.log("🚀 ~ init ~ metaDecoded:", metaDecoded)
 
       const initial = await fetchInitialDraws(gameId, 5);
       setLastDraws(initial.results);
+      console.log("🚀 ~ init ~ initial.results:", initial.results)
 
       return initial.results;
     } catch (e) {

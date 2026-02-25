@@ -106,6 +106,20 @@ const SpinningBalls = forwardRef(({
     if (!mesh) throw new Error("No ball mesh found in ball GLB");
 
     const geometry = mesh.geometry.clone();
+    const uv = geometry.attributes.uv;
+
+    if (geometry.attributes.uv && !geometry.userData.uvFlipped) {
+      const uv = geometry.attributes.uv;
+
+      for (let i = 0; i < uv.count; i++) {
+        uv.setX(i, 1 - uv.getX(i));
+      }
+
+      uv.needsUpdate = true;
+      // geometry.userData.uvFlipped = true; // 👈 prevent double flip
+    }
+
+    uv.needsUpdate = true;
     geometry.computeBoundingBox();
     const center = new THREE.Vector3();
     geometry.boundingBox.getCenter(center);
@@ -117,6 +131,8 @@ const SpinningBalls = forwardRef(({
 
     const material = Array.isArray(mesh.material) ? mesh.material[0].clone() : mesh.material.clone();
     if (texture) {
+      // 👈 VERY IMPORTANT
+
       material.map = texture;
       material.needsUpdate = true;
     }
@@ -182,7 +198,20 @@ const SpinningBalls = forwardRef(({
 
       const mat = baseMaterial.clone();
       if (textures[t]) {
-        mat.map = textures[t];
+
+        const tex = textures[t].clone();   // 👈 VERY IMPORTANT
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+
+        // tex.center.set(1, 1);          // rotate from center
+        tex.rotation = Math.PI;            // adjust if needed
+
+        // tex.repeat.set(1, 1);
+        // tex.offset.set(0, 0);
+
+        tex.needsUpdate = true;
+
+        mat.map = tex;
         mat.needsUpdate = true;
         if (mat.map) {
           mat.map.encoding = THREE.sRGBEncoding;
@@ -501,7 +530,7 @@ const SpinningBalls = forwardRef(({
               exitedBallsRef.current = [];
               sequenceRef.current = [];
               resetTimeoutRef.current = null;
-            }, 2000);
+            }, 1500);
           }
         }
 
