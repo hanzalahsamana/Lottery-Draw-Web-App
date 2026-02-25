@@ -138,7 +138,7 @@ const Game = () => {
         }
         setRevealedCount(0);
 
-        triggerDraw(parsed)
+        triggerDraw(numbers)
 
         let idx = 0;
         revealIntervalRef.current = setInterval(() => {
