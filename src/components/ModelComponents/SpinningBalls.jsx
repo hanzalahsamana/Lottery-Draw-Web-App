@@ -530,7 +530,7 @@ const SpinningBalls = forwardRef(({
               exitedBallsRef.current = [];
               sequenceRef.current = [];
               resetTimeoutRef.current = null;
-            }, 1500);
+            }, 1000);
           }
         }
 
