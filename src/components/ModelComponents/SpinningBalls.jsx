@@ -8,7 +8,6 @@ const SpinningBalls = forwardRef(({
   count = 25,
   ballScale = 1,
   ballScene,
-  ballTexture,
   ballTextures,
   // new tunable props:
   speed = 1.5,                 // global speed multiplier (>1 faster, <1 slower)

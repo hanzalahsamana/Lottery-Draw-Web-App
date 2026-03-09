@@ -18,6 +18,7 @@ message ReqGameEnquery{
 message ResGameEnquery{
 	repeated Game game=1;
 	repeated LuckyGame luckyGame=2;
+	
 	message Game{
 		required string game_type_id=1;
 		required string game_id=2;
@@ -136,18 +137,18 @@ message ResGameEnquery{
 		required string draw_no=2;
 		required string draw_date=3;
 		required string draw_type=4;
-	}
+		}
+	
 	 message BingoDrawResultInfo{
       required string resultNo=1;
       optional string turnoverAmount=2;
       repeated ObjectResultInfo objectResultInfo=3;
     }
-     message ObjectResultInfo{
+    message ObjectResultInfo{
            required string prize_level=1;
            required string luckyNo=2;
     }
-	message BingoObjectDetal
-    {
+	message BingoObjectDetal{
       required int32 prize_level=1;
       optional string object_name=2;
       optional string prizeAmount=3;

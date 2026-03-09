@@ -1,6 +1,4 @@
 import BilliardBall from './BilliardBall'
-import { AiOutlineDollarCircle } from 'react-icons/ai';
-import AnimationWrapper from './AnimationWrapper';
 import { useEffect, useState } from 'react';
 import { formatDaysHoursMinutesSeconds, formatYYYYMMDD } from '../utils/dateUtil';
 
@@ -13,7 +11,19 @@ const dummyData = [
 ];
 
 
-const DrawResults = ({ secondsLeft, draws, isSelling, openingDraw, metadata }) => {
+const DrawResults = ({ nextDraw, last5Draws }) => {
+    const [secondsLeft, setSecondsLeft] = useState("");
+
+    useEffect(() => {
+        if (!nextDraw?.endSellingTime) return;
+
+        const interval = setInterval(() => {
+            setSecondsLeft(formatDaysHoursMinutesSeconds(nextDraw?.endSellingTime));
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [nextDraw?.endSellingTime]);
+
 
     return (
         <div className='bg-transparent w-full py-13.5 px-2.5 md:px-7.5 overflow-hidden'>
@@ -22,31 +32,22 @@ const DrawResults = ({ secondsLeft, draws, isSelling, openingDraw, metadata }) =
                     <div className="absolute -bottom-0.5 left-0 w-full h-0.5 bg-[#0b1220]"></div>
                     <div className="absolute left-1/2 -top-2.5 transform -translate-x-1/2 w-40 md:w-72 h-24 rounded-2xl bg-linear-to-r from-[#7c3aed] to-[#06b6d4] opacity-20 blur-xl z-10" />
                     <div className='flex items-center gap-2 absolute -bottom-7 flex-col z-10'>
-                        {isSelling ? (
+                        {(nextDraw?.endSellingTime && secondsLeft) ? (
                             <>
-                                <p className='text-gray-300 text-[12px]/[12px] 2xl:text-[14px]/[14px] text-shadow-xs font-medium uppercase tracking-wide'>
-                                    Next Draw In
+                                <p className='text-gray-300 text-[16px]/[16px] 2xl:text-[16px]/[16px] text-shadow-xs'>
+                                    Next Draw  <span className='font-medium'>#{nextDraw?.drawNo}</span>
                                 </p>
                                 <div className="countdown text-[40px]/[38px] 2xl:text-[45px]/[45px] font-extrabold tracking-[1px]">
-                                    {formatDaysHoursMinutesSeconds(secondsLeft)}
+                                    {secondsLeft}
                                 </div>
-                            </>
-                        ) : openingDraw ? (
-                            <>
-                                <p className='text-gray-100 text-[30px]/[30px] 2xl:text-[30px]/[30px] text-shadow-xs font-black  tracking-wide'>
-                                    Draw Opening
-                                </p>
-                                <p className='text-gray-300 text-[12px]/[12px] 2xl:text-[14px]/[14px] text-shadow-xs font-medium tracking-wide'>
-                                    Currently draw is opening, stay tuned for the results!
-                                </p>
                             </>
                         ) : (
                             <>
                                 <p className='text-gray-100 text-[30px]/[30px] 2xl:text-[30px]/[30px] text-shadow-xs font-black  tracking-wide'>
-                                    No Draws Ongoing
+                                    Draw Starting Soon
                                 </p>
                                 <p className='text-gray-300 text-[12px]/[12px] 2xl:text-[14px]/[14px] text-shadow-xs font-medium tracking-wide'>
-                                    Comeback later for the new draw results!
+                                    Comeback later for the new draw!
                                 </p>
 
                             </>
@@ -59,9 +60,8 @@ const DrawResults = ({ secondsLeft, draws, isSelling, openingDraw, metadata }) =
 
 
                 <div className="w-full overflow-x-auto">
-                    <div className="min-w-[800px] flex flex-col gap-2">
-                        {/* Table Header */}
-                        <div className="grid grid-cols-6 justify-between pb-3.75 px-5 text-white/60 font-normal text-sm 2xl:text-base relative">
+                    <div className="min-w-200 flex flex-col gap-2">
+                        <div className="grid grid-cols-6 justify-between pb-3.75 px-5 text-white/90 font-normal text-sm 2xl:text-base relative">
                             <p className="flex-1 px-5 text-start text-nowrap">Draw No</p>
                             <p className="flex-1 px-5 text-center text-nowrap">Game Name</p>
                             <p className="flex-1 col-span-2 px-5 text-center text-nowrap">Winning Numbers</p>
@@ -69,27 +69,27 @@ const DrawResults = ({ secondsLeft, draws, isSelling, openingDraw, metadata }) =
                             <p className="flex-1 px-5 text-end text-nowrap">Special Number</p>
                         </div>
 
-                        {/* Table Rows */}
-                        {draws?.map((row, index) => {
-                            const winningNumbers = row?.resultNo?.split(",");
-                            const formattedDate = formatYYYYMMDD(row.drawDate);
+                        {last5Draws?.map((row, index) => {
 
                             return (
                                 <div
                                     key={index}
-                                    className={`w-full h-12.5 rounded-lg px-5 text-[13px] 2xl:text-[15px] text-white/70 grid grid-cols-6 items-center gap-2 min-w-[800px] ${index % 2 === 0 ? "bg-white/5" : "bg-black/0"
+                                    className={`w-full h-12.5 rounded-lg px-5 text-[13px] 2xl:text-[15px] text-white/80 grid grid-cols-6 items-center gap-2 min-w-200 ${index % 2 === 0 ? "bg-white/5" : "bg-black/0"
                                         } relative`}
                                 >
                                     <div className="px-5 text-start text-nowrap flex-1"># {row.drawNo}</div>
                                     <div className="px-5 text-center flex-1 text-nowrap">{row?.gameTypeName || "unknown"}</div>
 
                                     <div className="px-5 col-span-2 flex items-center justify-center gap-2">
-                                        {winningNumbers.map((num, i) => (
-                                            <BilliardBall key={i} ballNo={num} color={dummyData[index]} />
-                                        ))}
+                                        {!row?.resultNo
+                                            ? 'Invalid Result'
+                                            : row?.resultNo?.map((num, i) => (
+                                                <BilliardBall key={i} ballNo={num} color={dummyData[index]} />
+                                            ))
+                                        }
                                     </div>
 
-                                    <div className="px-5 flex-1 text-nowrap text-center">{formattedDate || "no-record"}</div>
+                                    <div className="px-5 flex-1 text-nowrap text-center">{formatYYYYMMDD(row.drawDate) || "no-record"}</div>
                                     <div className="px-5 flex-1 flex justify-end items-center text-nowrap text-center">{row?.speciaNo ? <BilliardBall ballNo={row?.speciaNo} /> : "None"}</div>
                                 </div>
                             );
@@ -99,7 +99,7 @@ const DrawResults = ({ secondsLeft, draws, isSelling, openingDraw, metadata }) =
 
 
             </div>
-        </div>
+        </div >
 
     )
 }

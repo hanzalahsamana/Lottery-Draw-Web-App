@@ -7,16 +7,12 @@ import { useSharedModels } from "../../hooks/useSharedModels";
 
 const Model = forwardRef(({ playSequence = [], ballCount }, ref) => {
   const animationRef = useRef();
-  const modelRef = useRef(); // for mouse tilt
+  const modelRef = useRef();
   const mouse = useRef({ x: 0, y: 0 });
 
   const { machine, ball } = useSharedModels();
   const { scene, animations } = machine;
   const { actions } = useAnimations(animations, animationRef);
-
-  const texture = new THREE.TextureLoader().load(`/Compelet_Machine_Model_Textures/Ball_Model_Textures/${51}.png`);
-  texture.encoding = THREE.sRGBEncoding;
-  texture.anisotropy = 100;
 
   const textures = useMemo(() => {
     const texArr = [];
@@ -29,16 +25,8 @@ const Model = forwardRef(({ playSequence = [], ballCount }, ref) => {
     return texArr;
   }, []);
 
-  const fakeEnv = new THREE.TextureLoader().load('/environment.jpeg');
-  fakeEnv.mapping = THREE.EquirectangularReflectionMapping;
-
-  const getMirrorMaterial = (oldMat) => {
-    const newMat = new THREE.MeshPhysicalMaterial();
-    newMat.copy(oldMat);
-    newMat.roughness = 1.5;
-    newMat.opacity = 1;
-    return newMat;
-  };
+  // const fakeEnv = new THREE.TextureLoader().load('/environment.jpeg');
+  // fakeEnv.mapping = THREE.EquirectangularReflectionMapping;
 
   // Mouse tracking
   useEffect(() => {
@@ -80,17 +68,12 @@ const Model = forwardRef(({ playSequence = [], ballCount }, ref) => {
 
     scene.traverse((node) => {
       if (node.isMesh && node.name === "Line001") {
-        node.material = getMirrorMaterial(node.material);
+        const newMat = new THREE.MeshPhysicalMaterial();
+        newMat.copy(node.material);
+        newMat.roughness = 1.5;
+        newMat.opacity = 1;
+        node.material = newMat;
       }
-      // if (node.isMesh && node.name === "Line001001") {
-      //   const newMat = new THREE.MeshPhysicalMaterial();
-      //   newMat.copy(node.material);
-      //   newMat.roughness = 1.5;
-      //   newMat.opacity = 1;
-      //   newMat.metalness =2
-
-      //   node.material = newMat;
-      // }
     });
 
     const animNames = Object.keys(actions || {});
@@ -109,7 +92,6 @@ const Model = forwardRef(({ playSequence = [], ballCount }, ref) => {
           count={ballCount}
           scene={scene}
           ballScene={ball.scene}
-          ballTexture={texture}
           ballTextures={textures}
           ref={ref}
         />

@@ -2,152 +2,112 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import protobuf from 'protobufjs';
 import { Client } from '@stomp/stompjs';
 import { getHandler } from '../apis/MGPEClient';
-import { PROTO_PATH, RABBIT_WS, RABBIT_TOPIC, RABBIT_USER, RABBIT_PASS, RABBIT_HOST } from '../constants/constant';
+import { PROTO_PATH, RABBIT_WS, RABBIT_USER, RABBIT_PASS, RABBIT_HOST } from '../constants/constant';
 import { getGameMetaData } from '../apis/getGameMetaData';
 import { getDrawResults } from '../apis/getDrawResults';
 
 export default function useGameDraws(gameId) {
-  const [gameMeta, setGameMeta] = useState(null);
-  const [lastDraws, setLastDraws] = useState([]);
-  const [loading, setLoading] = useState([]);
-  const [lotteryLoading, setLotteryLoading] = useState(false);
+  const [protoLoaded, setProtoLoaded] = useState(false);
+  const [last5Draws, setLast5Draws] = useState([]);
+  const [nextDraw, setNextDraw] = useState({});
+  const [currentDraw, setCurrentDraw] = useState({});
+  const [startDrawOpening, setStartDrawOpening] = useState({});
+  const [loading, setLoading] = useState(true);
 
   const rootRef = useRef(null);
   const stompClientRef = useRef(null);
 
   const pushDraw = useCallback((draw) => {
-    setLastDraws((prev) => {
-      const deduped = prev.filter((d) => !(d.draw_no && draw.draw_no && d.draw_no === draw.draw_no));
-      return [draw, ...deduped].slice(0, 5);
+    setLast5Draws((prev) => {
+      const filtered = prev.filter((d) => !(d.draw_no && draw.draw_no && d.draw_no === draw.draw_no));
+      return [draw, ...filtered].slice(0, 5);
     });
   }, []);
 
   useEffect(() => {
     let canceled = false;
+    const protoPath = PROTO_PATH;
     protobuf
-      .load(PROTO_PATH)
+      .load(protoPath)
       .then((root) => {
         if (canceled) return;
         rootRef.current = root;
+        setProtoLoaded(true);
       })
       .catch((err) => {
-        console.error('Failed to load proto files', err);
+        console.error('Failed to load proto:', err);
       });
+
     return () => {
       canceled = true;
     };
-  }, [PROTO_PATH]);
-
-  const fetchGameMeta = useCallback(async (gameId) => {
-    try {
-      if (!rootRef.current) throw new Error('proto not loaded');
-
-      const ReqGameEnquery = rootRef.current.lookupType('net.mpos.portal.entry.ReqGameEnquery');
-      const ResGameEnquery = rootRef.current.lookupType('net.mpos.portal.entry.ResGameEnquery');
-
-      const axiosInstance = getHandler(ReqGameEnquery, ResGameEnquery);
-
-      const message = {
-        gameTypeId: 1,
-        gameId: String(gameId),
-        drawStatus: 2,
-      };
-
-      const responce = await getGameMetaData(axiosInstance, message);
-      const results = responce.game || [];
-
-      return results[0];
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
   }, []);
 
-  const fetchInitialDraws = useCallback(async (gameId) => {
-    try {
-      if (!rootRef.current) throw new Error('proto not loaded');
+  useEffect(() => {
+    if (!gameId || !protoLoaded) return;
 
-      const ReqDrawResult = rootRef.current.lookupType('net.mpos.portal.entry.ReqDrawResult');
-      const ResDrawResult = rootRef.current.lookupType('net.mpos.portal.entry.ResDrawResult');
-
-      const axiosInstance = getHandler(ReqDrawResult, ResDrawResult);
-
-      const message = {
-        gameTypeId: 1,
-        gameId: String(gameId),
-      };
-
-      const responce = await getDrawResults(axiosInstance, message);
-
-      const results = responce.drawResultInfo || [];
-
-      return { results: results.slice(0, 5) };
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
-  }, []);
-
-  const init = async (initialFetch = true) => {
-    try {
-      if (!gameId) {
-        console.warn('No gameId in URL');
-        return;
-      }
-      if (initialFetch) {
+    const init = async () => {
+      try {
         setLoading(true);
-      } else {
-        setLotteryLoading(true);
-      }
 
-      const waitForProto = () =>
-        new Promise((res) => {
-          const t = setInterval(() => {
-            if (rootRef.current) {
-              clearInterval(t);
-              res();
-            }
-          }, 100);
+        const ReqGameEnquery = rootRef.current.lookupType('net.mpos.portal.entry.ReqGameEnquery');
+        const ResGameEnquery = rootRef.current.lookupType('net.mpos.portal.entry.ResGameEnquery');
+
+        const axiosMeta = getHandler(ReqGameEnquery, ResGameEnquery);
+
+        const metaRes = await getGameMetaData(axiosMeta, {
+          gameTypeId: 1,
+          gameId: String(gameId),
+          drawStatus: 2,
         });
-      await waitForProto();
+        const gameInstance = metaRes?.game?.[0]?.gameInstance?.[0];
+        const formattedNextDraw = {
+          drawNo: gameInstance?.drawNo,
+          drawDate: gameInstance?.drawDate,
+          startSellingTime: gameInstance?.startSellingTime,
+          endSellingTime: gameInstance?.endSellingTime,
+        };
 
-      const metaDecoded = await fetchGameMeta(gameId);
+        setNextDraw(formattedNextDraw);
 
-      const dummy = {
-        gameInstance: [
-          {
-            startSellingTime: '2026-02-11 07:30:00',
-            endSellingTime: '2026-02-11 07:44:00',
-            drawNo: '2c9f809f9953433d019955276c3e0003',
-          },
-        ],
-      };
-      setGameMeta(metaDecoded);
-      console.log("🚀 ~ init ~ metaDecoded:", metaDecoded)
+        const ReqDrawResult = rootRef.current.lookupType('net.mpos.portal.entry.ReqDrawResult');
+        const ResDrawResult = rootRef.current.lookupType('net.mpos.portal.entry.ResDrawResult');
 
-      const initial = await fetchInitialDraws(gameId, 5);
-      setLastDraws(initial.results);
-      console.log("🚀 ~ init ~ initial.results:", initial.results)
+        const axiosDraw = getHandler(ReqDrawResult, ResDrawResult);
 
-      return initial.results;
-    } catch (e) {
-      console.error('init error', e);
-    } finally {
-      setLoading(false);
-      setLotteryLoading(false);
-    }
-  };
-  useEffect(() => {
+        const drawRes = await getDrawResults(axiosDraw, {
+          gameTypeId: 1,
+          gameId: String(gameId),
+        });
+
+        const formattedLastDraws = drawRes?.drawResultInfo?.map((row) => ({
+          resultNo: row?.resultNo?.split(','),
+          gameTypeName: row?.gameTypeName,
+          drawDate: row?.drawDate,
+          speciaNo: row?.speciaNo,
+          drawNo: row?.drawNo,
+        }));
+
+        setCurrentDraw({ ...formattedLastDraws?.[0], status: 'opened' });
+        setLast5Draws(formattedLastDraws.slice(0, 5) || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     init();
-  }, [gameId, fetchGameMeta, fetchInitialDraws]);
+  }, [gameId, protoLoaded]);
 
   useEffect(() => {
-    if (!rootRef.current) return;
+    if (!protoLoaded) return;
 
-    const ResDrawResult = rootRef.current.lookupType('net.mpos.portal.entry.ResDrawResult');
+    const DrawResultProto = rootRef.current.lookupType('net.mpos.portal.entry.ResDrawResult');
+    const GameStartProto = rootRef.current.lookupType('net.mpos.portal.entry.GameStart');
+    const GameStopProto = rootRef.current.lookupType('net.mpos.portal.entry.GameStop');
 
-    const client = new Client();
-    client.configure({
+    const client = new Client({
       brokerURL: RABBIT_WS,
       connectHeaders: {
         login: RABBIT_USER || '',
@@ -157,54 +117,74 @@ export default function useGameDraws(gameId) {
       reconnectDelay: 5000,
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
-      logRawCommunication: false,
-      onConnect: (e) => {
-        const sub = client.subscribe(RABBIT_TOPIC, (message) => {
-          const body = message.binaryBody || message.body;
-          if (!body) return;
-          let uint8;
-          if (body instanceof ArrayBuffer) uint8 = new Uint8Array(body);
-          else if (Array.isArray(body)) uint8 = new Uint8Array(body);
-          else if (typeof body === 'string') {
-            // If server sends base64 encoded string, decode:
-            try {
-              const str = atob(body);
-              const arr = new Uint8Array(str.length);
-              for (let i = 0; i < str.length; i++) arr[i] = str.charCodeAt(i);
-              uint8 = arr;
-            } catch (_e) {
-              // fallback: use text encoder
-              uint8 = new TextEncoder().encode(body);
-            }
-          } else {
-            console.warn('unknown message body type', typeof body);
-            return;
-          }
+      onConnect: () => {
+        const topics = ['/exchange/high_freq_start_exchange', '/exchange/high_freq_result_exchange', '/exchange/high_freq_stop_exchange'];
 
-          try {
-            const decoded = ResDrawResult.decode(uint8);
-            // decoded.drawResultInfo is repeated list; push each draw
-            if (decoded && decoded.drawResultInfo && decoded.drawResultInfo.length) {
-              decoded.drawResultInfo.forEach((d) => {
-                const mapped = {
-                  game_id: d.game_id,
-                  draw_no: d.draw_no,
-                  timestamp: d.drawDate || Date.now(),
-                  resultNo: d.resultNo || null,
-                  presentResultString: d.presentResultString || [],
+        topics.forEach((topic) => {
+          client.subscribe(topic, (message) => {
+            try {
+              let base64String;
+
+              if (message.binaryBody) {
+                base64String = new TextDecoder().decode(message.binaryBody);
+              } else if (message.body) {
+                base64String = message.body;
+              } else {
+                return;
+              }
+
+              if (topic === '/exchange/high_freq_result_exchange') {
+                const resultDecode = decodeProtoData(base64String, DrawResultProto);
+                console.log('🚀 ~ useGameDraws ~ resultDecode:', resultDecode, base64String);
+                const resultInfo = resultDecode?.drawResultInfo?.[0];
+                const formattedResult = {
+                  resultNo: resultInfo?.resultNo?.split(','),
+                  gameTypeName: resultInfo?.gameTypeName,
+                  drawDate: resultInfo?.drawDate,
+                  speciaNo: resultInfo?.speciaNo,
+                  drawNo: resultInfo?.drawNo,
                 };
-                if (!gameId || String(gameId) === String(mapped.game_id)) {
-                  pushDraw(mapped);
-                }
-              });
+                setStartDrawOpening(formattedResult);
+              }
+              if (topic === '/exchange/high_freq_start_exchange') {
+                const gameStartDecode = decodeProtoData(base64String, GameStartProto);
+                console.log('🚀 ~ useGameDraws ~ gameStartDecode:', gameStartDecode, base64String);
+                const gameInstance = gameStartDecode?.gameInstance;
+
+                const formattedNextDraw = {
+                  drawNo: gameInstance?.drawNo,
+                  drawDate: gameInstance?.drawDate,
+                  startSellingTime: gameInstance?.startSellingTime,
+                  endSellingTime: gameInstance?.endSellingTime,
+                };
+
+                setNextDraw(formattedNextDraw);
+              }
+              if (topic === '/exchange/high_freq_stop_exchange') {
+                const gameStopDecode = decodeProtoData(base64String, GameStopProto);
+                console.log('🚀 ~ useGameDraws ~ gameStopDecode:', gameStopDecode, base64String);
+                const formattedCurrentDraw = {
+                  resultNo: [],
+                  gameTypeName: gameStopDecode?.gameInstanceName,
+                  drawDate: gameStopDecode?.drawDate,
+                  speciaNo: '',
+                  drawNo: gameStopDecode?.drawNo,
+                  status: 'waiting',
+                };
+                setCurrentDraw(formattedCurrentDraw);
+                setNextDraw((prev) => {
+                  if (prev?.drawNo === gameStopDecode?.drawNo) {
+                    return {};
+                  } else {
+                    return prev;
+                  }
+                });
+              }
+            } catch (err) {
+              console.error('WS decode error', err);
             }
-          } catch (err) {
-            console.error('Failed to decode incoming draw proto', err);
-          }
+          });
         });
-      },
-      onStompError: (frame) => {
-        console.error('STOMP error', frame);
       },
     });
 
@@ -212,11 +192,25 @@ export default function useGameDraws(gameId) {
     client.activate();
 
     return () => {
-      try {
-        stompClientRef.current && stompClientRef.current.deactivate();
-      } catch (e) {}
+      if (stompClientRef.current) {
+        stompClientRef.current.deactivate();
+      }
     };
-  }, [gameId, gameMeta]);
+  }, [gameId, protoLoaded, pushDraw]);
 
-  return { gameMeta, lastDraws, init, loading, lotteryLoading };
+  function decodeProtoData(base64, ProtoFile) {
+    const buffer = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+
+    const message = ProtoFile.decode(buffer);
+
+    const obj = ProtoFile.toObject(message, {
+      longs: String,
+      enums: String,
+      bytes: String,
+    });
+
+    return obj;
+  }
+
+  return { last5Draws, setLast5Draws, currentDraw, setCurrentDraw, nextDraw, startDrawOpening, setStartDrawOpening, loading };
 }

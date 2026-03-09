@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package net.mpos.portal.entry;
+
+message GameStart {
+    string game_type_id=1;
+    string game_id=2;
+    string game_name=3;
+    int32 is_banker=4;
+    string base_amount=5;
+    int32 min_mulitple_draw=6;
+    int32 max_mulitple_draw=7;
+    int32 multiple=8;
+    int32 max_ticket_entry=9;
+    int32 KKK=10;
+    int32 NNN=11;
+    int32 YYY=12;
+    int32 XXX=13;
+    string jackpot=14;
+    string snow_ball_pool=15;
+    GameInstance gameInstance=18;
+    int32 mutiple_count=20;
+    string max_base_amount=21;
+    string bet_amount_stepping = 22; 
+    int32 power_play_mode = 25;
+    string power_play_amount = 26;
+    int32 double_play_mode = 27;
+    string double_play_amount = 28;
+    int32 is_keno = 29;
+
+    message GameInstance{
+      string game_instance_id=1;
+      string game_instance_name=2;
+      string draw_no=3;
+      string start_selling_time=4;
+      string end_selling_time=5;
+      string draw_date=6;
+      int32 status=7;
+      string jackpot=8;
+      int32 version=9;
+      int32 estimate=14;
+      string snow_ball_pool=15;
+      string top_prize=16;
+	}
+}

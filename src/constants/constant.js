@@ -8,7 +8,7 @@ export const RABBIT_TOPIC = import.meta.env.VITE_REACT_APP_RABBITMQ_STOMP_TOPIC;
 export const RABBIT_USER = import.meta.env.VITE_REACT_APP_RABBITMQ_USER;
 export const RABBIT_PASS = import.meta.env.VITE_REACT_APP_RABBITMQ_PASS;
 export const RABBIT_HOST = import.meta.env.VITE_REACT_APP_RABBITMQ_HOST;
-export const PROTO_PATH = ['/protos/GameResult.proto', '/protos/GameEnquery.proto'];
+export const PROTO_PATH = ['/protos/GameResult.proto', '/protos/GameEnquery.proto', '/protos/GameStart.proto', '/protos/GameStop.proto'];
 
 export const Control_Ball_Index = 0;
 

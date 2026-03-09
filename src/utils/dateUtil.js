@@ -16,7 +16,7 @@ export function gmt8ToLocal(timeStr) {
   const localOffset = new Date().getTimezoneOffset() / -60;
 
   let iso;
-  if (localOffset === 5) {
+  if (localOffset === 5 || true) {
     // For Pakistan, treat input as GMT+8
     iso = timeStr.replace(' ', 'T') + '+08:00';
   } else {
@@ -28,7 +28,14 @@ export function gmt8ToLocal(timeStr) {
   return date;
 }
 
-export function formatDaysHoursMinutesSeconds(sec) {
+const calcSecondsLeft = (endTime) => {
+  const diff = Math.floor((endTime - new Date()) / 1000);
+  return diff > 0 ? diff : 0;
+};
+
+export function formatDaysHoursMinutesSeconds(time) {
+  const formattedTime = new Date(new Date(gmt8ToLocal(time)).getTime());
+  let sec = calcSecondsLeft(formattedTime);
   const days = Math.floor(sec / 86400);
   sec %= 86400;
   const hours = Math.floor(sec / 3600);

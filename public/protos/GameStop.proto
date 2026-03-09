@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package net.mpos.portal.entry;
+
+message GameStop {
+  int32 gameTypeId = 1;
+  string gameId = 2;
+  string gameName = 3;
+  string gameInstanceId = 4;
+  string gameInstanceName = 5;
+  string drawNo = 6;
+  string startSellingTime = 7;
+  string endSellingTime = 8;
+  string drawDate = 9;
+  int32 status = 10;
+}
