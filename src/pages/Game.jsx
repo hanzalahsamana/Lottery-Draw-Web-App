@@ -113,11 +113,12 @@ const Game = () => {
     return (
         <>
             <div className="fixed w-120 h-80 top-1/2 -translate-y-1/2 -right-8 blur-[180px] rounded-full bg-[#ffffff7d]" />
-            {/* <button onClick={() => triggerDraw(['1','2','3','4'])} className='fixed bottom-20 right-20 z-10000000 bg-white px-2 py-1 font-semibold w-max rounded-md cursor-pointer hover:opacity-95' >Click me</button> */}
+            {/* <button onClick={() => triggerDraw(['25','37','12','80','90','1'])} className='fixed bottom-20 right-20 z-10000000 bg-white px-2 py-1 font-semibold w-max rounded-md cursor-pointer hover:opacity-95' >Click me</button> */}
 
             <HeroSection
                 ref={lotteryRef}
                 currentDraw={currentDraw}
+                nextDraw={nextDraw}
             />
 
             <DrawResults

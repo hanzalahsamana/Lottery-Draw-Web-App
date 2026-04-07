@@ -23,12 +23,12 @@ const games = [
     },
 ]
 
-const HeroSection = forwardRef(({ currentDraw }, ref) => {
+const HeroSection = forwardRef(({ currentDraw ,nextDraw}, ref) => {
     return (
-        <div className="md:h-125 2xl:h-150 flex flex-col md:flex-row items-center md:items-center justify-between px-4 sm:px-17 py-6 md:py-0 gap-8 md:gap-0">
+        <div className="md:h-125 2xl:h-[1000px] flex flex-col md:flex-row items-center md:items-center justify-between px-4 sm:px-17 py-6 md:py-0 gap-8 md:gap-0">
             <div className="z-20 flex flex-col gap-1 md:gap-0 2xl:gap-4 mt-10 -mb-25 md:mb-0 md:mt-6 w-full md:w-max">
-                <h1 className="font-bold text-[#FEB906] text-[30px] sm:text-[35px] md:text-[55px]/[70px] 2xl:text-[70px]/[70px]">Millions in prizes,</h1>
-                <h1 className="font-bold text-[#ffffff] text-[30px] sm:text-[35px] md:text-[55px]/[70px] 2xl:text-[70px]/[70px]">Just one ticket away.</h1>
+                <h1 className="font-bold text-[#FEB906] text-[30px] sm:text-[35px] md:text-[55px]/[70px] 2xl:text-[90px]/[90px]">Millions in prizes,</h1>
+                <h1 className="font-bold text-[#ffffff] text-[30px] sm:text-[35px] md:text-[55px]/[70px] 2xl:text-[90px]/[90px]">Just one ticket away.</h1>
 
                 <div className="flex flex-col gap-2.5 mt-6 bg-[#0b12209c] w-full md:w-max ring-2 ring-white/15 text-white px-4 pt-2.5 pb-3.5 rounded-md text-[15px] 2xl:text-base">
                     {currentDraw?.drawNo ?
@@ -49,9 +49,10 @@ const HeroSection = forwardRef(({ currentDraw }, ref) => {
                         </div>
                     )}
                 </div>
+                
 
             </div>
-            <ModelRenderer ref={ref} ballCount={!currentDraw?.drawNo ? 0 : 51} />
+            <ModelRenderer ref={ref} ballCount={!nextDraw?.endSellingTime ? 0 : 90} />
         </div >
     )
 })

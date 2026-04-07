@@ -16,7 +16,7 @@ const Model = forwardRef(({ playSequence = [], ballCount }, ref) => {
 
   const textures = useMemo(() => {
     const texArr = [];
-    for (let i = 1; i <= 30; i++) {
+    for (let i = 1; i <= 90; i++) {
       const tex = new THREE.TextureLoader().load(`/Compelet_Machine_Model_Textures/Ball_Model_Textures/${i}.png`);
       tex.encoding = THREE.sRGBEncoding;
       tex.anisotropy = 100;
@@ -51,12 +51,10 @@ const Model = forwardRef(({ playSequence = [], ballCount }, ref) => {
       const targetRotX = mouse.current.y * 0.20;
       const targetPosX = mouse.current.y * 0.20;
 
-
-      modelRef.current.rotation.y = THREE.MathUtils.lerp(modelRef.current.rotation.y, targetRotY, 0.05);
-      modelRef.current.position.x = THREE.MathUtils.lerp(modelRef.current.position.x, targetPosY, 0.05);
-      modelRef.current.rotation.z = THREE.MathUtils.lerp(modelRef.current.rotation.z, targetRotX, 0.05);
-      modelRef.current.position.z = THREE.MathUtils.lerp(modelRef.current.position.z, targetPosX, 0.05);
-
+      // modelRef.current.rotation.y = THREE.MathUtils.lerp(modelRef.current.rotation.y, targetRotY, 0.05);
+      // modelRef.current.position.x = THREE.MathUtils.lerp(modelRef.current.position.x, targetPosY, 0.05);
+      // modelRef.current.rotation.z = THREE.MathUtils.lerp(modelRef.current.rotation.z, targetRotX, 0.05);
+      // modelRef.current.position.z = THREE.MathUtils.lerp(modelRef.current.position.z, targetPosX, 0.05);
 
       requestAnimationFrame(tick);
     };
@@ -72,6 +70,17 @@ const Model = forwardRef(({ playSequence = [], ballCount }, ref) => {
         newMat.copy(node.material);
         newMat.roughness = 1.5;
         newMat.opacity = 1;
+        node.material = newMat;
+      }
+      if (node.isMesh && node.name === "Line001001") {
+        const newMat = new THREE.MeshPhysicalMaterial();
+        newMat.copy(node.material);
+        newMat.opacity = 0.5;
+        newMat.reflectivity = 2;
+        newMat.transmission = 0;
+        newMat.metalness = 1;
+        newMat.roughness = 0.5;
+        newMat.clearcoat = 1;
         node.material = newMat;
       }
     });
