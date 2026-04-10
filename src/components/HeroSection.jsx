@@ -23,7 +23,7 @@ const games = [
     },
 ]
 
-const HeroSection = forwardRef(({ currentDraw ,nextDraw}, ref) => {
+const HeroSection = forwardRef(({ currentDraw, nextDraw }, ref) => {
     return (
         <div className="md:h-125 2xl:h-[1000px] flex flex-col md:flex-row items-center md:items-center justify-between px-4 sm:px-17 py-6 md:py-0 gap-8 md:gap-0">
             <div className="z-20 flex flex-col gap-1 md:gap-0 2xl:gap-4 mt-10 -mb-25 md:mb-0 md:mt-6 w-full md:w-max">
@@ -49,10 +49,10 @@ const HeroSection = forwardRef(({ currentDraw ,nextDraw}, ref) => {
                         </div>
                     )}
                 </div>
-                
+
 
             </div>
-            <ModelRenderer ref={ref} ballCount={!nextDraw?.endSellingTime ? 0 : 90} />
+            <ModelRenderer ref={ref} ballCount={!currentDraw?.drawNo ? 0 : 90} />
         </div >
     )
 })
