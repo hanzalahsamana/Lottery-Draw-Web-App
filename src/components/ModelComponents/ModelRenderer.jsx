@@ -5,6 +5,7 @@ import * as THREE from "three";
 import Model from "./Model";
 
 const ModelRenderer = forwardRef(({ ballCount }, ref) => {
+    console.log("🚀 ~ ballCount:", ballCount)
     return (
         <div className={`w-[300px] h-[500px] md:w-[400px] md:h-[700px] 2xl:w-[600px] 2xl:h-[1200px] overflow-visible relative scale-100 translate-0 md:-mt-[50px] flex items-start justify-start transition-all duration-[1s] z-1000 `}>
             <Canvas

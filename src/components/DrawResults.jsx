@@ -1,6 +1,6 @@
 import BilliardBall from './BilliardBall'
 import { useEffect, useState } from 'react';
-import { formatDaysHoursMinutesSeconds, formatYYYYMMDD } from '../utils/dateUtil';
+import { calcSecondsLeft, formatDaysHoursMinutesSeconds, formatYYYYMMDD, gmt8ToLocal } from '../utils/dateUtil';
 
 const dummyData = [
     'purple',
@@ -18,12 +18,20 @@ const DrawResults = ({ nextDraw, last5Draws }) => {
         if (!nextDraw?.endSellingTime) return;
 
         const interval = setInterval(() => {
-            setSecondsLeft(formatDaysHoursMinutesSeconds(nextDraw?.endSellingTime));
+            const formattedTime = new Date(new Date(gmt8ToLocal(nextDraw.endSellingTime)).getTime());
+            let sec = calcSecondsLeft(formattedTime);
+
+            if (sec <= 0) {
+                setSecondsLeft(null);
+                clearInterval(interval);
+                return;
+            }
+
+            setSecondsLeft(formatDaysHoursMinutesSeconds(sec));
         }, 1000);
 
         return () => clearInterval(interval);
     }, [nextDraw?.endSellingTime]);
-
 
     return (
         <div className='bg-transparent w-full py-13.5 px-2.5 md:px-7.5 overflow-hidden'>
@@ -80,17 +88,19 @@ const DrawResults = ({ nextDraw, last5Draws }) => {
                                     <div className="px-5 text-start text-nowrap flex-1"># {row.drawNo}</div>
                                     <div className="px-5 text-center flex-1 text-nowrap">{row?.gameTypeName || "unknown"}</div>
 
-                                    <div className="px-5 col-span-2 flex items-center justify-center gap-2">
-                                        {!row?.resultNo
-                                            ? 'Invalid Result'
-                                            : row?.resultNo?.map((num, i) => (
-                                                <BilliardBall key={i} ballNo={num} color={dummyData[index]} />
-                                            ))
-                                        }
+                                    <div className="px-5 col-span-2 flex justify-center items-center ">
+                                        <div className="flex justify-start overflow-x-auto w-max gap-2">
+                                            {!row?.resultNo
+                                                ? 'Invalid Result'
+                                                : row?.resultNo?.map((num, i) => (
+                                                    <BilliardBall key={i} ballNo={num} color={dummyData[index]} />
+                                                ))
+                                            }
+                                        </div>
                                     </div>
 
                                     <div className="px-5 flex-1 text-nowrap text-center">{formatYYYYMMDD(row.drawDate) || "no-record"}</div>
-                                    <div className="px-5 flex-1 flex justify-end items-center text-nowrap text-center">{row?.speciaNo ? <BilliardBall ballNo={row?.speciaNo} /> : "None"}</div>
+                                    <div className="px-5 flex-1 flex justify-end items-center text-nowrap text-center">{row?.specialNo ? <BilliardBall ballNo={row?.specialNo} /> : "None"}</div>
                                 </div>
                             );
                         })}

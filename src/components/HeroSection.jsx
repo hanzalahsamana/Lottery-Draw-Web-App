@@ -24,6 +24,7 @@ const games = [
 ]
 
 const HeroSection = forwardRef(({ currentDraw, nextDraw }, ref) => {
+    console.log("🚀 ~ currentDraw:", currentDraw)
     return (
         <div className="md:h-125 2xl:h-[1000px] flex flex-col md:flex-row items-center md:items-center justify-between px-4 sm:px-17 py-6 md:py-0 gap-8 md:gap-0">
             <div className="z-20 flex flex-col gap-1 md:gap-0 2xl:gap-4 mt-10 -mb-25 md:mb-0 md:mt-6 w-full md:w-max">
@@ -40,9 +41,11 @@ const HeroSection = forwardRef(({ currentDraw, nextDraw }, ref) => {
                             Waiting For Result....
                         </div>
                     ) : (
-                        <div className='flex gap-2.5'>
-                            {[1, 2, 3, 4, 5, 6].map((num, i) => (
-                                <div key={i} className={`w-7 scale-[1.05] aspect-square flex items-center justify-center rounded-full ${true ? 'bg-gray-600' : ''}`}>
+                        <div className='flex gap-2.5 max-w-[400px] overflow-auto customScroll pb-2 -mb-1'>
+                            {Array.from({
+                                length: Math.max(6, currentDraw?.resultNo?.length || 0)
+                            }).map((_, i) => (
+                                <div key={i} className={`min-w-7 max-w-7 min-h-7 max-h-7 flex items-center justify-center rounded-full ${true ? 'bg-gray-600' : ''}`}>
                                     {currentDraw?.resultNo?.[i] ? <BilliardBall ballNo={currentDraw?.resultNo?.[i]} /> : null}
                                 </div>
                             ))}
@@ -52,7 +55,7 @@ const HeroSection = forwardRef(({ currentDraw, nextDraw }, ref) => {
 
 
             </div>
-            <ModelRenderer ref={ref} ballCount={!currentDraw?.drawNo ? 0 : 90} />
+            <ModelRenderer ref={ref} ballCount={(currentDraw?.status === 'waiting' || currentDraw?.status === 'opening') ? (currentDraw?.numberOfBalls ?? 10) : 0} />
         </div >
     )
 })

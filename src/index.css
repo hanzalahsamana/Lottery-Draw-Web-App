@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* .HeroSection {
     background-image: url("/blackball.png"), url("/yellowball.png"), url("/redball.png"), url("./assets/mesh-gradient.svg");
@@ -7,116 +7,138 @@
     background-position: -10% 180%, 20% 90%, -5% -10%, center;
 } */
 .HeroSection {
-    background-image: url("./assets/mesh-gradient.svg");
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center;
+  background-image: url('./assets/mesh-gradient.svg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
 }
-
 
 #mask {
-    filter: drop-shadow(0 0 0.75rem rgb(0, 0, 0));
+  filter: drop-shadow(0 0 0.75rem rgb(0, 0, 0));
 }
 
-
 .countdown {
-    letter-spacing: 1px;
-    /* gradient text */
-    background: linear-gradient(0deg, #ffe9a8, #ffe9a8 60%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    text-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+  letter-spacing: 1px;
+  /* gradient text */
+  background: linear-gradient(0deg, #ffe9a8, #ffe9a8 60%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
 }
 
 .billiard-ball {
-    --_color-yellow: #F5D010;
-    --_color-blue: #98CFFF;
-    --_color-red: hsl(0 100% 50%);
-    --_color-pink: hsl(325 100% 50%);
-    --_color-purple: hsl(259, 87%, 65%);
-    --_color-orange: #eac614;
-    --_color-green: #94E140;
-    --_color-brown: hsl(10 100% 25%);
-    --_color-black: hsl(0 0% 5%);
-    --_color-white: hsl(0 0% 95%);
-    --_grad-light: radial-gradient(100% 100% at 70% 15%, hsl(0 0% 100%/.5), hsl(0 0% 100%/.2) 10%, hsl(0 0% 0%/.1) 60%, hsl(0 0% 0%/.4));
+  --_color-yellow: #f5d010;
+  --_color-blue: #98cfff;
+  --_color-red: hsl(0 100% 50%);
+  --_color-pink: hsl(325 100% 50%);
+  --_color-purple: hsl(259, 87%, 65%);
+  --_color-orange: #eac614;
+  --_color-green: #94e140;
+  --_color-brown: hsl(10 100% 25%);
+  --_color-black: hsl(0 0% 5%);
+  --_color-white: hsl(0 0% 95%);
+  --_grad-light: radial-gradient(100% 100% at 70% 15%, hsl(0 0% 100%/0.5), hsl(0 0% 100%/0.2) 10%, hsl(0 0% 0%/0.1) 60%, hsl(0 0% 0%/0.4));
 
-    aspect-ratio: 1/1;
-    /* box-shadow: -1rem 1rem 1rem hsl(0 0% 0% / .5); */
-    background-color: var(--_color-orange);
-    background-image: var(--_grad-light);
+  aspect-ratio: 1/1;
+  /* box-shadow: -1rem 1rem 1rem hsl(0 0% 0% / .5); */
+  background-color: var(--_color-orange);
+  background-image: var(--_grad-light);
 
-    box-shadow: 3px 0px 4px #00000065 inset, 0px 2px 6px -1px #000000a0;
+  box-shadow:
+    3px 0px 4px #00000065 inset,
+    0px 2px 6px -1px #000000a0;
 }
 
-
-.billiard-ball[data-snooker="red"] {
-    background-color: var(--_color-red);
+.billiard-ball[data-snooker='red'] {
+  background-color: var(--_color-red);
 }
 
-.billiard-ball[data-snooker="yellow"] {
-    background-color: var(--_color-yellow);
+.billiard-ball[data-snooker='yellow'] {
+  background-color: var(--_color-yellow);
 }
 
-.billiard-ball[data-snooker="green"] {
-    background-color: var(--_color-green);
+.billiard-ball[data-snooker='green'] {
+  background-color: var(--_color-green);
 }
 
-.billiard-ball[data-snooker="brown"] {
-    background-color: var(--_color-brown);
+.billiard-ball[data-snooker='brown'] {
+  background-color: var(--_color-brown);
 }
 
-.billiard-ball[data-snooker="blue"] {
-    background-color: var(--_color-blue);
+.billiard-ball[data-snooker='blue'] {
+  background-color: var(--_color-blue);
 }
 
-.billiard-ball[data-snooker="pink"] {
-    background-color: var(--_color-pink);
+.billiard-ball[data-snooker='pink'] {
+  background-color: var(--_color-pink);
 }
 
-.billiard-ball[data-snooker="black"] {
-    background-color: var(--_color-black);
+.billiard-ball[data-snooker='black'] {
+  background-color: var(--_color-black);
 }
 
-.billiard-ball[data-snooker="purple"] {
-    background-color: var(--_color-purple);
+.billiard-ball[data-snooker='purple'] {
+  background-color: var(--_color-purple);
 }
 
-.billiard-ball[data-snooker="white"] {
-    background-color: var(--_color-white);
+.billiard-ball[data-snooker='white'] {
+  background-color: var(--_color-white);
 }
 
-
-::-webkit-scrollbar {
-    display: none;
+body::-webkit-scrollbar {
+  display: none;
 }
 
 /* Firefox */
-* {
-    scrollbar-width: none;
+body {
+  scrollbar-width: none;
 }
 
 /* IE */
-* {
-    -ms-overflow-style: none;
+body {
+  -ms-overflow-style: none;
 }
 
+.customScroll {
+  overflow: auto;
+}
+
+.customScroll::-webkit-scrollbar {
+  width: 2.5px;
+  height: 2.5px;
+}
+
+.customScroll::-webkit-scrollbar-track {
+  background-color: transparent;
+  border-radius: 0px;
+  margin: 12px 0px;
+}
+
+.customScroll::-webkit-scrollbar-thumb {
+  background-color: #5b5b5b99;
+  border-radius: 20px;
+  border: 0px solid #0000001a;
+}
+
+.customScroll::-webkit-scrollbar-thumb:hover {
+  background-color: #0000001a;
+}
 
 .animteUpDown {
-    animation: updown 3s ease-in-out infinite;
+  animation: updown 3s ease-in-out infinite;
 }
 
 @keyframes updown {
-    0% {
-        transform: translateY(0px);
-    }
+  0% {
+    transform: translateY(0px);
+  }
 
-    50% {
-        transform: translateY(-10px);
-    }
+  50% {
+    transform: translateY(-10px);
+  }
 
-    100% {
-        transform: translateY(0px);
-    }
+  100% {
+    transform: translateY(0px);
+  }
 }

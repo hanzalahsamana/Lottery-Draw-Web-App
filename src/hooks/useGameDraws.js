@@ -14,6 +14,7 @@ export default function useGameDraws(gameId) {
   const [startDrawOpening, setStartDrawOpening] = useState({});
   const [loading, setLoading] = useState(true);
 
+  const nextDrawRef = useRef({});
   const rootRef = useRef(null);
   const stompClientRef = useRef(null);
 
@@ -66,9 +67,13 @@ export default function useGameDraws(gameId) {
           drawDate: gameInstance?.drawDate,
           startSellingTime: gameInstance?.startSellingTime,
           endSellingTime: gameInstance?.endSellingTime,
+          numberOfBalls: metaRes?.game?.[0]?.NNN || 90,
+          gameTypeName: metaRes?.game?.[0]?.gameName,
         };
 
+        nextDrawRef.current = formattedNextDraw;
         setNextDraw(formattedNextDraw);
+        console.log('🚀 ~ Api responce ~ GetMetaData:', formattedNextDraw);
 
         const ReqDrawResult = rootRef.current.lookupType('net.mpos.portal.entry.ReqDrawResult');
         const ResDrawResult = rootRef.current.lookupType('net.mpos.portal.entry.ResDrawResult');
@@ -84,9 +89,11 @@ export default function useGameDraws(gameId) {
           resultNo: row?.resultNo?.split(','),
           gameTypeName: row?.gameTypeName,
           drawDate: row?.drawDate,
-          speciaNo: row?.speciaNo,
+          specialNo: row?.speciaNo,
           drawNo: row?.drawNo,
         }));
+
+        console.log('🚀 ~ Api responce ~ GetRecentDraws:', formattedLastDraws);
 
         setCurrentDraw({ ...formattedLastDraws?.[0], status: 'opened' });
         setLast5Draws(formattedLastDraws.slice(0, 5) || []);
@@ -99,6 +106,10 @@ export default function useGameDraws(gameId) {
 
     init();
   }, [gameId, protoLoaded]);
+
+  // useEffect(() => {
+  //   console.log('hbhbhb', nextDraw);
+  // }, [currentDraw, last5Draws]);
 
   useEffect(() => {
     if (!protoLoaded) return;
@@ -135,20 +146,24 @@ export default function useGameDraws(gameId) {
 
               if (topic === '/exchange/high_freq_result_exchange') {
                 const resultDecode = decodeProtoData(base64String, DrawResultProto);
-                console.log('🚀 ~ useGameDraws ~ resultDecode:', resultDecode, base64String);
+                console.log('🚀 ~ Webhook ~ result ~ resultDecode:', resultDecode);
                 const resultInfo = resultDecode?.drawResultInfo?.[0];
+                if (resultInfo.gameId !== gameId) return;
+                if (startDrawOpening?.drawNo === resultInfo?.drawNo) return;
+
                 const formattedResult = {
-                  resultNo: resultInfo?.resultNo?.split(','),
+                  resultNo: typeof resultInfo?.resultNo === 'string' ? resultInfo.resultNo.split(',').filter(Boolean) : resultInfo?.resultNo || [],
                   gameTypeName: resultInfo?.gameTypeName,
                   drawDate: resultInfo?.drawDate,
-                  speciaNo: resultInfo?.speciaNo,
+                  specialNo: resultInfo?.speciaNo,
                   drawNo: resultInfo?.drawNo,
                 };
                 setStartDrawOpening(formattedResult);
               }
               if (topic === '/exchange/high_freq_start_exchange') {
                 const gameStartDecode = decodeProtoData(base64String, GameStartProto);
-                console.log('🚀 ~ useGameDraws ~ gameStartDecode:', gameStartDecode, base64String);
+                console.log('🚀 ~  Webhook ~ start ~ gameStartDecode:', gameStartDecode);
+                if (gameStartDecode.gameId !== gameId) return;
                 const gameInstance = gameStartDecode?.gameInstance;
 
                 const formattedNextDraw = {
@@ -156,22 +171,27 @@ export default function useGameDraws(gameId) {
                   drawDate: gameInstance?.drawDate,
                   startSellingTime: gameInstance?.startSellingTime,
                   endSellingTime: gameInstance?.endSellingTime,
+                  numberOfBalls: gameStartDecode?.NNN || 90,
+                  gameTypeName: gameStartDecode?.gameName,
                 };
-
+                nextDrawRef.current = formattedNextDraw;
                 setNextDraw(formattedNextDraw);
               }
               if (topic === '/exchange/high_freq_stop_exchange') {
                 const gameStopDecode = decodeProtoData(base64String, GameStopProto);
-                console.log('🚀 ~ useGameDraws ~ gameStopDecode:', gameStopDecode, base64String);
+                console.log('🚀 ~ Webhook ~ stop ~ gameStopDecode:', gameStopDecode);
+                if (gameStopDecode.gameId !== gameId) return;
                 const formattedCurrentDraw = {
                   resultNo: [],
-                  gameTypeName: gameStopDecode?.gameInstanceName,
-                  drawDate: gameStopDecode?.drawDate,
-                  speciaNo: '',
+                  gameTypeName: nextDrawRef.current?.gameTypeName,
+                  drawDate: nextDrawRef.current?.drawDate,
+                  specialNo: nextDrawRef.current?.specialNo,
                   drawNo: gameStopDecode?.drawNo,
                   status: 'waiting',
+                  numberOfBalls: nextDrawRef.current?.numberOfBalls || 90,
                 };
                 setCurrentDraw(formattedCurrentDraw);
+                console.log('🚀 ~ useGameDraws ~ formattedCurrentDraw:', formattedCurrentDraw, nextDrawRef);
                 setNextDraw((prev) => {
                   if (prev?.drawNo === gameStopDecode?.drawNo) {
                     return {};

@@ -28,14 +28,14 @@ export function gmt8ToLocal(timeStr) {
   return date;
 }
 
-const calcSecondsLeft = (endTime) => {
+export const calcSecondsLeft = (endTime) => {
   const diff = Math.floor((endTime - new Date()) / 1000);
   return diff > 0 ? diff : 0;
 };
 
-export function formatDaysHoursMinutesSeconds(time) {
-  const formattedTime = new Date(new Date(gmt8ToLocal(time)).getTime());
-  let sec = calcSecondsLeft(formattedTime);
+export function formatDaysHoursMinutesSeconds(sec) {
+  // const formattedTime = new Date(new Date(gmt8ToLocal(time)).getTime());
+  // let sec = calcSecondsLeft(formattedTime);
   const days = Math.floor(sec / 86400);
   sec %= 86400;
   const hours = Math.floor(sec / 3600);

@@ -11,7 +11,7 @@ const SpinningBalls = forwardRef(({
   ballTextures,
   // new tunable props:
   speed = 1.5,                 // global speed multiplier (>1 faster, <1 slower)
-  animationTimeProp = 5.0,     // base animation time for active ball (seconds)
+  animationTimeProp = 4.5,     // base animation time for active ball (seconds)
   damping = 0.98,              // per-frame velocity damping (0.98 keeps velocity, 0.9 more drag)
   jitterScale = 0.01,          // random jitter magnitude
   initialVelBase = 0.3,        // base initial velocity multiplier
@@ -384,6 +384,14 @@ const SpinningBalls = forwardRef(({
       slices.get(key).push(v.clone());
     }
 
+    // PIPE_CENTER_POINTS.forEach((p) => {
+    //   const geo = new THREE.SphereGeometry(0.02, 0, 8);
+    //   const mat = new THREE.MeshBasicMaterial({ color: "red" });
+    //   const dot = new THREE.Mesh(geo, mat);
+
+    //   dot.position.copy(p);
+    //   scene.add(dot);
+    // });
     const curve = new THREE.CatmullRomCurve3(PIPE_CENTER_POINTS);
     curve.curveType = "centripetal";
     curve.closed = false;
@@ -441,14 +449,12 @@ const SpinningBalls = forwardRef(({
       const b = states[i];
 
       // ---------- if this ball has already exited (stacked) ---------- //
-      const exitIndex = exitedBallsRef.current.indexOf(i);
-      if (exitIndex !== -1) {
-        const spacing = Math.max((b.radius || 0.12) * 2, 0.10);
-        const finalPos = pipeExitRef.current.clone().addScaledVector(stackDirRef.current, exitIndex * spacing);
-
-        b.pos.copy(finalPos);
+      const exitData = exitedBallsRef.current.find(b => b.index === i);
+      if (exitData) {
+        b.pos.copy(exitData.pos);
         b.vel.set(0, 0, 0);
         b.ang.set(0, 0, 0);
+
         tempObj.position.copy(b.pos);
         tempObj.quaternion.identity();
         tempObj.scale.set(ballScale, ballScale, ballScale);
@@ -487,7 +493,7 @@ const SpinningBalls = forwardRef(({
           const t01 = rawT * rawT * (3 - 2 * rawT);
 
           const alreadyExited = exitedBallsRef.current.length;
-          const spacing = Math.max((b.radius || 0.12) * 2.05, 0.18);
+          const spacing = Math.max((b.radius || 0.12) * 2, 0.10);
 
           const pipeLengthPortion = 0.024;
           const maxT = 1 - (alreadyExited * pipeLengthPortion);
@@ -517,7 +523,10 @@ const SpinningBalls = forwardRef(({
           lastSeqRef.current = seqIndex + 1;
           seqIndexRef.current = seqIndex + 1;
 
-          exitedBallsRef.current.push(i);
+          exitedBallsRef.current.push({
+            index: i,
+            pos: b.pos.clone()
+          });
 
           if (seqIndexRef.current >= sequence.length) {
             if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);

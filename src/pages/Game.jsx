@@ -12,6 +12,7 @@ const Game = () => {
     const gameId = params.get('game_id');
 
     const { last5Draws, setLast5Draws, currentDraw, nextDraw, startDrawOpening, loading, setCurrentDraw, setStartDrawOpening } = useGameDraws(gameId);
+    console.log("🚀 ~ Game ~ currentDraw:", currentDraw)
 
     const lotteryRef = useRef();
     const revealIntervalRef = useRef(null);
@@ -66,20 +67,29 @@ const Game = () => {
                 revealIntervalRef.current = null;
 
                 hideTimeoutRef.current = setTimeout(() => {
-                }, 2000);
+                    setCurrentDraw((prev) => {
+                        const updated = {
+                            ...prev,
+                            status: "closed",
+                        };
+
+                        setLast5Draws((prevDraws) => {
+                            if (!updated?.drawNo) return prevDraws;
+
+                            const exists = prevDraws.some((d) => d.drawNo === updated.drawNo);
+                            if (exists) return prevDraws;
+
+                            return [updated, ...prevDraws].slice(0, 5);
+                        });
+
+                        return updated;
+                    });
+                }, 3000);
             }
 
-        }, 3000);
+        }, 3500);
 
-        setLast5Draws((prev) => {
-            if (!currentDraw?.drawNo) return prev;
 
-            const exists = prev.some((d) => d.drawNo === currentDraw.drawNo);
-
-            if (exists) return prev;
-
-            return [currentDraw, ...prev].slice(0, 5);
-        });
 
         return () => {
             if (revealIntervalRef.current) {
@@ -113,7 +123,7 @@ const Game = () => {
     return (
         <>
             <div className="fixed w-120 h-80 top-1/2 -translate-y-1/2 -right-8 blur-[180px] rounded-full bg-[#ffffff7d]" />
-            {/* <button onClick={() => triggerDraw(['25','37','12','80','90','1'])} className='fixed bottom-20 right-20 z-10000000 bg-white px-2 py-1 font-semibold w-max rounded-md cursor-pointer hover:opacity-95' >Click me</button> */}
+            {/* <button onClick={() => triggerDraw(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12','13','14','15','16','17','18','19','20'])} className='fixed bottom-20 right-20 z-10000000 bg-white px-2 py-1 font-semibold w-max rounded-md cursor-pointer hover:opacity-95' >Click me</button> */}
 
             <HeroSection
                 ref={lotteryRef}
