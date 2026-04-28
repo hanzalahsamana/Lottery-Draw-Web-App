@@ -5,6 +5,7 @@ import { getHandler } from '../apis/MGPEClient';
 import { PROTO_PATH, RABBIT_WS, RABBIT_USER, RABBIT_PASS, RABBIT_HOST } from '../constants/constant';
 import { getGameMetaData } from '../apis/getGameMetaData';
 import { getDrawResults } from '../apis/getDrawResults';
+import { useNavigate } from 'react-router-dom';
 
 export default function useGameDraws(gameId) {
   const [protoLoaded, setProtoLoaded] = useState(false);
@@ -13,6 +14,9 @@ export default function useGameDraws(gameId) {
   const [currentDraw, setCurrentDraw] = useState({});
   const [startDrawOpening, setStartDrawOpening] = useState({});
   const [loading, setLoading] = useState(true);
+  const [hello, sethello] = useState(false);
+
+  const navigate = useNavigate();
 
   const nextDrawRef = useRef({});
   const rootRef = useRef(null);
@@ -45,7 +49,7 @@ export default function useGameDraws(gameId) {
   }, []);
 
   useEffect(() => {
-    if (!gameId || !protoLoaded) return;
+    if (!protoLoaded) return;
 
     const init = async () => {
       try {
@@ -54,27 +58,34 @@ export default function useGameDraws(gameId) {
         const ReqGameEnquery = rootRef.current.lookupType('net.mpos.portal.entry.ReqGameEnquery');
         const ResGameEnquery = rootRef.current.lookupType('net.mpos.portal.entry.ResGameEnquery');
 
-        const axiosMeta = getHandler(ReqGameEnquery, ResGameEnquery);
+        try {
+          const axiosMeta = getHandler(ReqGameEnquery, ResGameEnquery);
 
-        const metaRes = await getGameMetaData(axiosMeta, {
-          gameTypeId: 1,
-          gameId: String(gameId),
-          drawStatus: 2,
-        });
-        const gameInstance = metaRes?.game?.[0]?.gameInstance?.[0];
-        const formattedNextDraw = {
-          drawNo: gameInstance?.drawNo,
-          drawDate: gameInstance?.drawDate,
-          startSellingTime: gameInstance?.startSellingTime,
-          endSellingTime: gameInstance?.endSellingTime,
-          numberOfBalls: metaRes?.game?.[0]?.NNN || 90,
-          gameTypeName: metaRes?.game?.[0]?.gameName,
-        };
+          const metaRes = await getGameMetaData(axiosMeta, {
+            gameTypeId: 1,
+            gameId: String(gameId),
+            drawStatus: 2,
+          });
 
-        nextDrawRef.current = formattedNextDraw;
-        setNextDraw(formattedNextDraw);
-        console.log('🚀 ~ Api responce ~ GetMetaData:', formattedNextDraw);
+          const gameInstance = metaRes?.game?.[0]?.gameInstance?.[0];
+          const formattedNextDraw = {
+            drawNo: gameInstance?.drawNo,
+            drawDate: gameInstance?.drawDate,
+            startSellingTime: gameInstance?.startSellingTime,
+            endSellingTime: gameInstance?.endSellingTime,
+            numberOfBalls: metaRes?.game?.[0]?.NNN || 90,
+            gameTypeName: metaRes?.game?.[0]?.gameName,
+          };
 
+          nextDrawRef.current = formattedNextDraw;
+          setNextDraw(formattedNextDraw);
+          console.log('🚀 ~ Api responce ~ GetMetaData:', formattedNextDraw);
+        } catch (error) {
+          const errorCode = error?.response_code || error?.response?.headers?.response_code || '500';
+
+          navigate(`/error?errorcode=${errorCode}`);
+          return;
+        }
         const ReqDrawResult = rootRef.current.lookupType('net.mpos.portal.entry.ReqDrawResult');
         const ResDrawResult = rootRef.current.lookupType('net.mpos.portal.entry.ResDrawResult');
 
@@ -106,10 +117,6 @@ export default function useGameDraws(gameId) {
 
     init();
   }, [gameId, protoLoaded]);
-
-  // useEffect(() => {
-  //   console.log('hbhbhb', nextDraw);
-  // }, [currentDraw, last5Draws]);
 
   useEffect(() => {
     if (!protoLoaded) return;
@@ -191,7 +198,6 @@ export default function useGameDraws(gameId) {
                   numberOfBalls: nextDrawRef.current?.numberOfBalls || 90,
                 };
                 setCurrentDraw(formattedCurrentDraw);
-                console.log('🚀 ~ useGameDraws ~ formattedCurrentDraw:', formattedCurrentDraw, nextDrawRef);
                 setNextDraw((prev) => {
                   if (prev?.drawNo === gameStopDecode?.drawNo) {
                     return {};

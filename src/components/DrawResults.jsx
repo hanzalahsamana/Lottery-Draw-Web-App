@@ -69,7 +69,7 @@ const DrawResults = ({ nextDraw, last5Draws }) => {
 
                 <div className="w-full overflow-x-auto">
                     <div className="min-w-200 flex flex-col gap-2">
-                        <div className="grid grid-cols-6 justify-between pb-3.75 px-5 text-white/90 font-normal text-sm 2xl:text-base relative">
+                        <div className="grid grid-cols-6 justify-between pb-3.75 px-5 text-white/90 font-normal text-sm 2xl:text-xl relative">
                             <p className="flex-1 px-5 text-start text-nowrap">Draw No</p>
                             <p className="flex-1 px-5 text-center text-nowrap">Game Name</p>
                             <p className="flex-1 col-span-2 px-5 text-center text-nowrap">Winning Numbers</p>
@@ -82,14 +82,14 @@ const DrawResults = ({ nextDraw, last5Draws }) => {
                             return (
                                 <div
                                     key={index}
-                                    className={`w-full h-12.5 rounded-lg px-5 text-[13px] 2xl:text-[15px] text-white/80 grid grid-cols-6 items-center gap-2 min-w-200 ${index % 2 === 0 ? "bg-white/5" : "bg-black/0"
+                                    className={`w-full h-12.5 2xl:h-17 rounded-lg px-5 text-[13px] 2xl:text-[20px] text-white/80 grid grid-cols-6 items-center gap-2 min-w-200 ${index % 2 === 0 ? "bg-white/5" : "bg-black/0"
                                         } relative`}
                                 >
                                     <div className="px-5 text-start text-nowrap flex-1"># {row.drawNo}</div>
                                     <div className="px-5 text-center flex-1 text-nowrap">{row?.gameTypeName || "unknown"}</div>
 
                                     <div className="px-5 col-span-2 flex justify-center items-center ">
-                                        <div className="flex justify-start overflow-x-auto w-max gap-2">
+                                        <div className="flex justify-start overflow-x-auto w-max gap-2 ">
                                             {!row?.resultNo
                                                 ? 'Invalid Result'
                                                 : row?.resultNo?.map((num, i) => (

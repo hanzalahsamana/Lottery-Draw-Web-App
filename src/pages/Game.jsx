@@ -12,7 +12,6 @@ const Game = () => {
     const gameId = params.get('game_id');
 
     const { last5Draws, setLast5Draws, currentDraw, nextDraw, startDrawOpening, loading, setCurrentDraw, setStartDrawOpening } = useGameDraws(gameId);
-    console.log("🚀 ~ Game ~ currentDraw:", currentDraw)
 
     const lotteryRef = useRef();
     const revealIntervalRef = useRef(null);
@@ -112,9 +111,10 @@ const Game = () => {
         };
     }, []);
 
-    if (!gameId) {
-        return <Navigate to="/" replace />;
-    }
+    // if (!gameId) {
+
+    //     return null;
+    // }
 
     if (loading) {
         return <WebLoader />;

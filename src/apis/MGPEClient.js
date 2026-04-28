@@ -1,4 +1,3 @@
-// mgpeClient.js
 import axios from 'axios';
 import protobuf from 'protobufjs';
 
@@ -13,19 +12,32 @@ export function getHandler(reqType, resType) {
     return config;
   });
 
-  instance.interceptors.response.use((response) => {
-    const responseCode = response.headers['response_code'];
+  instance.interceptors.response.use(
+    (response) => {
+      const responseCode = response.headers?.response_code;
 
-    if (responseCode == 200 || responseCode == 6000) {
-      if (response.data && resType) {
-        response.data = resType.decode(new Uint8Array(response.data));
+      if (responseCode == 200 || responseCode == 6000) {
+        if (response.data && resType) {
+          response.data = resType.decode(new Uint8Array(response.data));
+        }
+        return response;
       }
-    } else {
-      console.error('MGPE Error:', response, JSON.stringify(response, null, 2));
-    }
 
-    return response;
-  });
+      const error = new Error('MGPE API Error');
+      error.response_code = responseCode || '500';
+      error.response = response;
+      return Promise.reject(error);
+    },
+    (error) => {
+      const responseCode =
+        error?.response?.headers?.response_code ||
+        error?.response_code ||
+        '500';
+
+      error.response_code = responseCode;
+      return Promise.reject(error);
+    }
+  );
 
   return instance;
 }
