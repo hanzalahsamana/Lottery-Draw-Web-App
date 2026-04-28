@@ -54,7 +54,7 @@ const HeroSection = forwardRef(({ currentDraw, nextDraw }, ref) => {
 
 
             </div>
-            <ModelRenderer ref={ref} ballCount={(currentDraw?.status === 'waiting' || currentDraw?.status === 'opening') ? (currentDraw?.numberOfBalls ?? 10) : 10} />
+            <ModelRenderer ref={ref} ballCount={(currentDraw?.status === 'waiting' || currentDraw?.status === 'opening') ? (currentDraw?.numberOfBalls ?? 10) : 0} />
         </div >
     )
 })
